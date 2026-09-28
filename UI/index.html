@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Viscillate</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+  <body>
+    <div class = "head">
+      <div class="left">
+        <div class="connectionIndicator"> <!--states: connected or ""-->
+          <div class="connectionDot"></div>
+          Disconnected
+        </div>
+
+        <div class="voltageModeContainer"> <!--states: inactive or ""-->
+            Voltage Mode:
+            <div class="vMode active" id="vMode50">±50V</div> <!--states: active or ""-->
+            <div class="vMode" id="vMode20">±20V</div> <!--states: active or ""-->
+            <div class="vMode" id="vMode8">±8V</div> <!--states: active or ""-->
+        </div>
+
+        <button class="playPauseBtn"> <!--states: inactive or ""-->
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3">
+              <path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z" />
+          </svg>
+          Play
+        </button>
+      </div>
+
+      <div class="right">
+        <div class="modeSelectContainer">
+          <div class="modes">
+            <button class="mode" id="modeOss">Oscilloscope</button> <!--states: active or ""-->
+            <button class="mode" id="modeVolt">Voltmeter</button> <!--states: active or ""-->
+            <div class="highlightPill oscilloscope"></div> <!--states: oscilloscope or voltmeter-->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class = "main-oscilloscope">
+      <div class="left">
+        <div class="graphContainer"></div> <!--states: inactive or ""-->
+      </div>
+
+      <div class="right">
+        <div class = "graphInfo">
+          <div class="horizontalGroup">
+            <div class="graphInfoElement" id="Vpp">Vpp: --V</div> <!--states: inactive or ""-->
+            <div class="graphInfoElement" id="Vrms">Vrms: --V</div> <!--states: inactive or ""-->
+          </div>
+          <div class="horizontalGroup">
+            <div class="graphInfoElement" id="Vmax">Vmax: --V</div> <!--states: inactive or ""-->
+            <div class="graphInfoElement" id="Vmin">Vmin: --V</div> <!--states: inactive or ""-->
+          </div>
+          <div class="horizontalGroup">
+            <div class="graphInfoElement" id="freq">Freq: --Hz</div> <!--states: inactive or ""-->
+            <div class="graphInfoElement" id="duty">Duty: --%</div> <!--states: inactive or ""-->
+          </div>
+          <div class="horizontalGroup">
+            <div class="graphInfoElement" id="timePeriod">Period: --ms</div> <!--states: inactive or ""-->
+            <div class="graphInfoElement" id="voltage">Voltage: --V</div> <!--states: inactive or ""-->
+          </div>
+        </div>
+        <div class="horizontalDivider"></div>
+        <div class="graphSettings">
+          <h2>Graph Zooming and Panning</h2>
+          <div class="slider-container" id="timeFrame">
+            <div class="slider-label">Display Time Frame (ms)</div>
+            <div class="slider-wrapper">
+              <input type="number" class="floating-input" value="100"/>
+              <input type="range" class="styled-slider" min="10" max="9999" value="100"/>
+            </div>
+          </div>
+          <div class="slider-container" id="voltageLimit">
+            <div class="slider-label">Display Voltage Limit (V)</div>
+            <div class="slider-wrapper">
+              <div class="floating-input-wrapper"><input type="number" class="floating-input" value="50"/></div>
+              <input type="range" class="styled-slider" min="1" max="50" value="50"/>
+            </div>
+          </div>
+          <div class="slider-container" id="voltageOffset">
+            <div class="slider-label">Voltage Offset (V)</div>
+            <div class="slider-wrapper">
+              <div class="floating-input-wrapper"><input type="number" class="floating-input" value="0"/></div>
+              <input type="range" class="styled-slider" min="-50" max="50" value="0"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-voltmeter inactive">
+      <h1 class="voltmeter-voltage">--V</h1> <!--states: inactive or ""-->
+    </div>
+  </body>
+</html>

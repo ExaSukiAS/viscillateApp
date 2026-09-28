@@ -1,0 +1,32 @@
+Package: vcpkg-cmake-config
+Version: 2026-07-21
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 89f9dd1b369984df380a4d5edbcd763e22af889f1d7bdd8a4a7fcc365251b7a7
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2025-08-07
+Architecture: x64-windows
+Multi-Arch: same
+Abi: d54a73c9adc3a73de000016a9507b6df0c8ba963f384ddbc122cb187f722a94e
+Status: install ok installed
+
+Package: wil
+Version: 1.0.260126.7
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 613569f061a8d4b414ca7c074458c5c26bf3789ac6de804a27db3ebb5746758d
+Description: The Windows Implementation Libraries (WIL) is a header-only C++ library created to make life easier for developers on Windows through readable type-safe C++ interfaces for common Windows coding patterns.
+Status: install ok installed
+
+Package: webview2
+Version: 1.0.4191.47
+Depends: wil
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 232ab010830d7ec479f932134cdab1dff50dc00a16024a4564d8a7fb8b3c1aa9
+Description: The WebView2 control allows you to embed web technologies (HTML, CSS, and JavaScript) using Microsoft Edge
+Status: install ok installed
+

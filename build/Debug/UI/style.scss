@@ -1,0 +1,429 @@
+@use "sass:map";
+
+$colors: (
+  primary: #4e83ef,
+  primary-light: #80aaff,
+  secondary: #9872cc,
+  tertiary: #c36990,
+  error: #d82f48,
+  success: #2fd82f,
+  background: #131314,
+  background-light: #262626,
+  background-lighter: #333333,
+  text: #f8f9fa
+);
+$font-normal: 14px;
+$font-small: 12px;
+
+@mixin generate-color-vars($palette) {
+  @each $name, $value in $palette {
+    --color-#{$name}: #{$value};
+  }
+}
+
+@function color($key) {
+  @return map.get($colors, $key);
+}
+
+:root {
+  @include generate-color-vars($colors);
+}
+
+@mixin load-font($name, $filename, $weight, $style: normal) {
+  @font-face {
+    font-family: '#{$name}';
+    src: url('./fonts/#{$filename}.ttf') format('truetype');
+    font-weight: $weight;
+    font-style: $style;
+    font-display: swap;
+  }
+}
+
+@include load-font('Poppins', 'Poppins-Regular', 400);
+@include load-font('Poppins', 'Poppins-Medium', 500);
+@include load-font('Poppins', 'Poppins-SemiBold', 600);
+@include load-font('Poppins', 'Poppins-Bold', 700);
+@include load-font('Poppins', 'Poppins-ExtraBold', 800);
+@include load-font('Poppins', 'Poppins-Black', 900);
+
+body{
+  background: color(background);
+  background-size: 100px 100px;
+  overflow: hidden;
+  text-align: left;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  margin: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  height: calc(100vh - 30px);
+}
+
+.main-oscilloscope{
+  margin-top: 50px;
+  height: calc(100vh - 90px);
+  width: calc(100vw - 30px);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  &.inactive{
+    display: none;
+  }
+
+  .left {
+    height: 100%;
+    width: 75%;
+    min-width: 0; 
+    min-height: 0;
+
+    .graphContainer {
+      padding-right: 8px;
+      height: 100%;
+      border: 2px solid #80aaff85;
+      border-radius: 10px;
+      
+      box-sizing: border-box; 
+      overflow: hidden; 
+
+      &.inactive{
+        border: 2px solid #6b6b6b52;
+      }
+      
+      :global(.uplot) {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+  .right{
+    width: 25%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    overflow-y: auto;
+    gap: 25px;
+    .graphInfo{
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      .horizontalGroup{
+        width: calc(100% - 10px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        .graphInfoElement{
+          background-color: color(background-light);
+          color: color(text);
+          font-family: "Poppins", sans-serif;
+          font-size: $font-normal;
+          font-weight: 500;
+          padding: 4px 8px;
+          border-radius: 8px;
+          width: 100%;
+          text-align: center;
+          border: 1px solid #80aaff85;
+          &.inactive{
+            border: 2px solid color(background-lighter);
+            color: #f8f9fa36;
+          }
+        }
+      }
+    }
+
+    .horizontalDivider{
+      width: 100%;
+      height: 2px;
+      background-color: color(background-lighter);
+    }
+
+    .graphSettings{
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      h2{
+        font-family: "Poppins", sans-serif;
+        color: color(text);
+        font-size: $font-normal;
+        width: 95%;
+        margin-bottom: -10px;
+        margin-top: -3px;
+        opacity: 0.7;
+      }
+      .slider-container {
+        background-color: color(background-light);
+        padding: 10px 24px 20px 35px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        width: calc(100% - 70px);
+        font-family: "Poppins", sans-serif;
+
+        .slider-label {
+          color: color(text);
+          font-size: $font-normal;
+          font-weight: 500;
+          margin-bottom: 45px; 
+          opacity: 0.7;
+          text-align: center;
+        }
+
+        .slider-wrapper {
+          position: relative;
+          width: 100%;
+          display: flex;
+          align-items: center;
+        }
+
+        .floating-input {
+          background-color: color(background-light); 
+          border: 1px solid color(primary);
+          color: color(text);
+          font-size: $font-small;
+          font-weight: 500;
+          width: 30px;
+          border-radius: 6px;
+          padding: 0px 6px;
+          text-align: center;
+          position: absolute;
+          bottom: 20px; 
+          font-family: "Poppins", sans-serif;
+          transition: left 0.1s ease-out;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .styled-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 4px;
+          background: color(primary); 
+          border-radius: 4px;
+          outline: none;
+          margin: 0;
+
+          &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: color(primary-light);
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.1s ease;
+
+            &:hover {
+              transform: scale(1.1);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.main-voltmeter{
+  margin-top: 50px;
+  height: calc(100vh - 90px);
+  width: calc(100vw - 30px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+
+  &.inactive{
+    display: none;
+  }
+
+  .voltmeter-voltage{
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    color: color(text);
+    font-size: 156px;
+
+    &.inactive{
+      color: color(background-light);
+    }
+  }
+}
+
+.head{
+  position: absolute;
+  top: 0px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .left{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    .connectionIndicator{
+      background-color: color(background);
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 500;
+      gap: 10px;
+      color: color(text);
+      padding: 1px 10px 1px 5px;
+      width: min-content;
+      height: min-content;
+      border: 2px solid #6a6a6a;
+      font-size: $font-normal;
+
+      .connectionDot{
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #6a6a6a;
+      }
+    }
+    .connectionIndicator.connected{
+      .connectionDot{
+        background: color(success); 
+        box-shadow: 0 0 12px color(success);
+      }
+    }
+
+    .voltageModeContainer{
+      font-size: $font-normal;
+      color: color(text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background-color: color(background-light);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid color(primary-light);
+
+      &.inactive{
+        border: 1px solid color(background-lighter);
+        color: #f8f9fa36;
+      }
+
+      .vMode{
+        padding: 1px 6px;
+        &.active{
+          color: color(primary-light);
+          background-color: #80aaff25;
+          border-radius: 100px;
+          border: 1px solid color(primary);
+        }
+      }
+    }
+
+    .playPauseBtn{
+      font-family: "Poppins", sans-serif;
+      font-weight: 500;
+      font-size: $font-normal;
+      background-color: color(background-light);
+      border: 2px solid color(primary);
+      border-radius: 7px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      color: color(text);
+      cursor: pointer;
+      svg{
+        fill: color(primary-light);
+      }
+      &.inactive{
+        cursor: default;
+        border: 2px solid color(background-lighter);
+        color: #f8f9fa36;
+        svg{
+          fill: #80aaff34;
+        }
+      }
+    }
+  }
+  
+  .right{
+    .modeSelectContainer{
+      background-color: color(background-light);
+      border: 1px solid color(primary-light);
+      padding: 4px 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      .modes{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        .mode{
+          background-color: transparent;
+          border: none;
+          font-family: "Poppins", sans-serif;
+          font-weight: 500;
+          font-size: $font-normal;
+          color: color(text);
+          cursor: pointer;
+          &.active{
+            color: color(primary-light);
+          }
+        }
+      }
+      .highlightPill{
+        background-color: #80aaff38;
+        border: 1px solid color(primary);
+        border-radius: 100px;
+        height: 20px;
+        position: absolute;
+        transition: .3s;
+        &.oscilloscope{
+          width: 106px;
+          left: 8px;
+        }
+        &.voltmeter{
+          width: 86px;
+          left: 119px;         
+        }
+      }
+    }
+  }
+}
+
+::-webkit-scrollbar {
+    height:10px; 
+    width: 5px;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 10px;
+
+    &:hover{
+      background: #545454;
+    }
+}
+::-webkit-scrollbar-track {
+    background: transparent; 
+}

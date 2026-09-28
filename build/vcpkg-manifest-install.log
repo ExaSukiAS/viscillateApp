@@ -1,0 +1,20 @@
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+The following packages are already installed:
+  * vcpkg-cmake:x64-windows@2025-08-07
+  * vcpkg-cmake-config:x64-windows@2026-07-21
+    webview2:x64-windows@1.0.4191.47
+    wil:x64-windows@1.0.260126.7
+wil provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(wil CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE WIL::WIL)
+
+webview2 provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(unofficial-webview2 CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE unofficial::webview2::webview2)
+
+All requested installations completed successfully in: 305 us

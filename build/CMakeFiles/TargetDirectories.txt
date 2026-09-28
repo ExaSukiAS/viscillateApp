@@ -1,0 +1,3 @@
+C:/Users/ACER/Desktop/Viscillate/viscillateApp/build/CMakeFiles/viscillateApp.dir
+C:/Users/ACER/Desktop/Viscillate/viscillateApp/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/ACER/Desktop/Viscillate/viscillateApp/build/CMakeFiles/ZERO_CHECK.dir

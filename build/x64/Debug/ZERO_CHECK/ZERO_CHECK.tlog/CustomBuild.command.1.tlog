@@ -1,0 +1,10 @@
+^C:\USERS\ACER\DESKTOP\VISCILLATE\VISCILLATEAPP\BUILD\CMAKEFILES\00103576EDE3E36F4A6A7489088AFA56\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/ACER/Desktop/Viscillate/viscillateApp -BC:/Users/ACER/Desktop/Viscillate/viscillateApp/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/ACER/Desktop/Viscillate/viscillateApp/build/viscillateApp.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
