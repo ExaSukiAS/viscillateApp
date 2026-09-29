@@ -1,9 +1,14 @@
+#pragma once
+
 #include <windows.h>
 #include <wrl.h>
 #include <wil/com.h>
 #include <WebView2.h>
 #include <string>
 #include <chrono>
+#include <dwmapi.h>
+
+#pragma comment(lib, "dwmapi.lib")
 
 using namespace Microsoft::WRL;
 
@@ -14,18 +19,19 @@ private:
     ComPtr<ICoreWebView2Controller> controller;
     ComPtr<ICoreWebView2> webview;
     wil::unique_couninitialize_call comInit;
-
     wil::com_ptr<ICoreWebView2Environment12> env12;
     wil::com_ptr<ICoreWebView2_17> webview17;
 
-    BYTE* rawBuffer = nullptr;
+    BYTE* JSsharedBuffer = nullptr; // shared memory buffer between C++ and JS
     wil::com_ptr<ICoreWebView2SharedBuffer> sharedBuffer;
 
     size_t currentFloatOffset = 0; 
-    const size_t maxSamplesPerSharedBuffer = 140000;
-    std::chrono::steady_clock::time_point lastSyncTime;
+    const size_t maxSamplesPerSharedBuffer = 280000; // max samples the shared memory buffer can hold
+    std::chrono::steady_clock::time_point lastSyncTime; // last time when JS was notified about buffer through IPC
 
+    // windows message queues for sending IPC messages to JS from outside main thread
     #define WM_SCOPE_SYNC (WM_USER + 1)
+    #define WM_SEND_JS_MSG (WM_USER + 2)
 
     static LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         UIhandler* pThis = nullptr;
@@ -60,8 +66,20 @@ private:
                     size_t offset = static_cast<size_t>(wParam);
                     size_t count = static_cast<size_t>(lParam);
                     
-                    std::wstring msg = L"sync:" + std::to_wstring(offset) + L":" + std::to_wstring(count);
+                    std::wstring msg = L"sync:" + std::to_wstring(offset) + L":" + std::to_wstring(count); // send ad colon-saperated string
                     webview->PostWebMessageAsString(msg.c_str());
+                }
+                break;
+            case WM_SEND_JS_MSG:
+                if (webview && lParam) {
+                    // Cast the pointer back to a wstring
+                    std::wstring* msg = reinterpret_cast<std::wstring*>(lParam);
+                    
+                    // Send to JavaScript
+                    webview->PostWebMessageAsString(msg->c_str());
+                    
+                    // Free the dynamically allocated memory
+                    delete msg; 
                 }
                 break;
             default:
@@ -71,11 +89,11 @@ private:
     }
 
     void setupSharedBuffer() {
-        if (!env12 || !webview17 || rawBuffer) return; // Prevent double initialization
+        if (!env12 || !webview17 || JSsharedBuffer) return; // Prevent double initialization
 
         UINT64 bufferSize = maxSamplesPerSharedBuffer * sizeof(float);
         if (SUCCEEDED(env12->CreateSharedBuffer(bufferSize, &sharedBuffer))) {
-            sharedBuffer->get_Buffer(&rawBuffer);
+            sharedBuffer->get_Buffer(&JSsharedBuffer);
             
             webview17->PostSharedBufferToScript(
                 sharedBuffer.get(),
@@ -108,10 +126,7 @@ private:
                                     [this](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
                                         wil::unique_cotaskmem_string message;
                                         if (SUCCEEDED(args->TryGetWebMessageAsString(&message)) && message) {
-                                            if (std::wstring(message.get()) == L"ready") {
-                                                // JS is ready, now safe to send shared buffer
-                                                setupSharedBuffer();
-                                            }
+                                            handleJSIPCmsg(std::wstring(message.get()));
                                         }
                                         return S_OK;
                                     }).Get(), nullptr);
@@ -137,9 +152,17 @@ private:
                 }).Get());
     }
 
+    // handles incoming IPC messages from JS
+    void handleJSIPCmsg(std::wstring msg){
+        if (msg == L"ready") {
+            setupSharedBuffer(); // JS is ready, now safe to send shared buffer
+        }
+    }
+
 public:
     UIhandler() {}
 
+    // launches the UI in webview2
     void launch() {
         comInit = wil::CoInitializeEx(COINIT_APARTMENTTHREADED);
 
@@ -157,12 +180,18 @@ public:
         RegisterClassExW(&wcex);
 
         hWnd = CreateWindowExW(
-            0, CLASS_NAME, L"Viscillate App", WS_OVERLAPPEDWINDOW,
+            0, CLASS_NAME, 
+            L"Viscillate",
+            WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, 1024, 768,
             nullptr, nullptr, hInstance, this 
         );
 
         if (!hWnd) return;
+
+        // use dark mode title bar
+        BOOL useDarkMode = TRUE;
+        DwmSetWindowAttribute(hWnd, 20, &useDarkMode, sizeof(useDarkMode));
 
         ShowWindow(hWnd, SW_SHOW);
         UpdateWindow(hWnd);
@@ -176,8 +205,10 @@ public:
         }
     }
 
+    // shares new data with JS using the shared buffer
+    // changes in buffer are done immedietly, but JS is notified about the change in a fixed interval to avoid overwhelming IPC calls
     void shareNewFrame(const float* samples, size_t count) {
-        if (!rawBuffer || !webview) return;
+        if (!JSsharedBuffer || !webview) return;
 
         size_t writeOffset = currentFloatOffset;
 
@@ -187,7 +218,7 @@ public:
         }
 
         size_t byteOffset = currentFloatOffset * sizeof(float);
-        memcpy(rawBuffer + byteOffset, samples, count * sizeof(float));
+        memcpy(JSsharedBuffer + byteOffset, samples, count * sizeof(float));
         currentFloatOffset += count;
 
         auto now = std::chrono::steady_clock::now();
@@ -198,5 +229,26 @@ public:
             PostMessageW(hWnd, WM_SCOPE_SYNC, static_cast<WPARAM>(writeOffset), static_cast<LPARAM>(count)); 
             lastSyncTime = now;
         }
+    }
+
+    // Sends a wide string to JavaScript
+    void sendMessageToJS(const std::wstring& message) {
+        if (!hWnd) return;
+        
+        std::wstring* msgPtr = new std::wstring(message); // Allocate string on the heap so it survives the cross-thread jump
+        
+        PostMessageW(hWnd, WM_SEND_JS_MSG, 0, reinterpret_cast<LPARAM>(msgPtr)); // Send it to the WindowProc queue to be processed on the UI thread
+    }
+
+    // Sends a standard UTF-8 string to JavaScript (auto-converts to wide string)
+    void sendMessageToJS(const std::string& message) {
+        if (message.empty() || !hWnd) return;
+        
+        // Convert std::string to std::wstring
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, &message[0], (int)message.size(), NULL, 0);
+        std::wstring wstr(size_needed, 0);
+        MultiByteToWideChar(CP_UTF8, 0, &message[0], (int)message.size(), &wstr[0], size_needed);
+        
+        sendMessageToJS(wstr); // Pass to the wide-string version
     }
 };

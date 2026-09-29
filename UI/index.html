@@ -6,18 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Viscillate</title>
     <script type="module" src="/main.js" defer></script>
+    <script type="module" src="/DOMelementFuncs"></script>
   </head>
   <body>
     <div class = "head">
       <div class="left">
         <div class="connectionIndicator"> <!--states: connected or ""-->
           <div class="connectionDot"></div>
-          Disconnected
+          <span class="connectionText">Disconnected</span>
         </div>
 
         <div class="voltageModeContainer"> <!--states: inactive or ""-->
             Voltage Mode:
-            <div class="vMode active" id="vMode50">±50V</div> <!--states: active or ""-->
+            <div class="vMode" id="vMode50">±50V</div> <!--states: active or ""-->
             <div class="vMode" id="vMode20">±20V</div> <!--states: active or ""-->
             <div class="vMode" id="vMode8">±8V</div> <!--states: active or ""-->
         </div>

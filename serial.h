@@ -6,12 +6,14 @@
 #include <devguid.h>
 #include <regex>
 #include <cstdint>
+#include "UIhandler.h"
 
 #pragma comment(lib, "setupapi.lib")
 
 class EspSerial {
 private:
     int baudRate;
+    UIhandler& UI;
 
     // ESP32 commands
     uint8_t adcStreamReqByte = 0x01;
@@ -133,7 +135,7 @@ public:
     double gains[3] = {0.0, 0.0, 0.0};
     double offsets[3] = {0.0, 0.0, 0.0};
 
-    EspSerial(int baudRate) {
+    EspSerial(int baudRate, UIhandler& ui) : UI(ui) {
         this->baudRate = baudRate;
     }
 
@@ -277,7 +279,7 @@ public:
     }
 
     // Reads and parses available data from ESP32. Intended to be called rapidly in a while loop
-    void readAndPrintADCChunk() {
+    void readADCChunkToSharedBuffer() {
         if (hStream == INVALID_HANDLE_VALUE) return;
 
         uint8_t tempBuf[4096];
@@ -347,10 +349,12 @@ public:
             voltArray.reserve(sampleCount);
 
             for (int i = 0; i < sampleCount; ++i) {
-                int16_t mV;
+                int16_t mV = 0;
                 memcpy(&mV, &streamRXBuffer[13 + (i * 2)], 2);
-                voltArray.push_back((mV - offset) / (gain * 1000.0));
+                voltArray.push_back(static_cast<float>((mV - offset) / (gain * 1000.0)));
             }
+
+            UI.shareNewFrame(voltArray.data(), sampleCount);
 
             // Erase this parsed packet from the buffer so we can parse the next one
             streamRXBuffer.erase(streamRXBuffer.begin(), streamRXBuffer.begin() + totalPacketSize);

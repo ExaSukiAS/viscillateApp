@@ -17,4 +17,4 @@ webview2 provides CMake targets:
   find_package(unofficial-webview2 CONFIG REQUIRED)
   target_link_libraries(main PRIVATE unofficial::webview2::webview2)
 
-All requested installations completed successfully in: 406 us
+All requested installations completed successfully in: 240 us
