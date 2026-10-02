@@ -7,6 +7,8 @@
 #include <string>
 #include <chrono>
 #include <dwmapi.h>
+#include <vector>
+#include <sstream>
 
 #pragma comment(lib, "dwmapi.lib")
 
@@ -152,14 +154,53 @@ private:
                 }).Get());
     }
 
+    // splits a wide string into parts based on a delimiter
+    std::vector<std::wstring> splitWstring(const std::wstring& str, wchar_t delimiter) {
+        std::vector<std::wstring> tokens;
+        size_t start = 0;
+        size_t end = str.find(delimiter);
+
+        while (end != std::wstring::npos) {
+            tokens.push_back(str.substr(start, end - start));
+            start = end + 1;
+            end = str.find(delimiter, start);
+        }
+
+        // Add the remaining token
+        tokens.push_back(str.substr(start));
+
+        return tokens;
+    }
+
     // handles incoming IPC messages from JS
     void handleJSIPCmsg(std::wstring msg){
-        if (msg == L"ready") {
+        std::vector<std::wstring> msgParts = splitWstring(msg, L':');
+        if (msgParts[0] == L"ready") {
             setupSharedBuffer(); // JS is ready, now safe to send shared buffer
+            isJSinitialized = true;
+        } else if (msgParts[0] == L"graphSettings") {
+            // Handle graph settings update
+            graphTimeFrame = std::stoi(msgParts[1]);
+            graphVoltageLimit = std::stof(msgParts[2]);
+            graphVoltageOffset = std::stof(msgParts[3]);
+
+            std::wcout << L"Graph Settings Updated - Time Frame: " << graphTimeFrame 
+                       << L", Voltage Limit: " << graphVoltageLimit 
+                       << L", Voltage Offset: " << graphVoltageOffset << std::endl;
         }
     }
 
 public:
+    std::atomic<bool> isJSinitialized = false; // flag to indicate is javascript is initialized
+
+    // UI graph settings
+    int graphTimeFrame = 100; // in ms
+    float graphVoltageLimit = 50.0f; // in volts
+    float graphVoltageOffset = 0.0f; // in volts
+
+    const int maxPointsPerGraphFrame = 1000; // max number of points on a single frame of the graph
+    const int maxFrameRate = 50; // max number of frames per second for the graph
+
     UIhandler() {}
 
     // launches the UI in webview2
@@ -224,7 +265,7 @@ public:
         auto now = std::chrono::steady_clock::now();
         auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSyncTime).count();
 
-        if (elapsedMs >= 10) { 
+        if (elapsedMs >= 17) { // roughly 60Hz
             // Send starting offset in wParam and count in lParam
             PostMessageW(hWnd, WM_SCOPE_SYNC, static_cast<WPARAM>(writeOffset), static_cast<LPARAM>(count)); 
             lastSyncTime = now;

@@ -14,32 +14,57 @@ std::atomic<bool> isEspInitialized = false; // flag to if esp32 requires initial
 float dummyData[512] = {0.0f};
 
 int main() {
-    std::thread serialThread([]() { while (isAppRunning) {
-        if(!serial.isConnected()){
-            espConnected = false;
-            UI.sendMessageToJS("connState:false");
-            std::cout << "Esp32-C3 not connected, scanning ports...\n";
-            serial.scanForEsp(isAppRunning);
-        } else {
-            if(espConnected == false){
-                UI.sendMessageToJS("connState:true");
-                espConnected = true;
-                isEspInitialized = false;
+    std::thread serialThread([]() { 
+        while (isAppRunning) {
+            // Wait until the JavaScript UI is ready
+            if (!UI.isJSinitialized) {
+                Sleep(50); 
+                continue;
             }
-        }
-        Sleep(1000);
-    }});
 
-    std::thread espDataThread([]() { while (isAppRunning) {
-        if(espConnected){
-            if(isEspInitialized){
-                serial.readADCChunkToSharedBuffer(); 
-                Sleep(5); // small sleep so we don't cook the CPU, but fast enough to catch 70kHz data
+            if(!serial.isConnected()){
+                espConnected = false;
+                UI.sendMessageToJS("connState:false");
+                std::cout << "Esp32-C3 not connected, scanning ports...\n";
+                serial.scanForEsp(isAppRunning);
             } else {
-                if(serial.updateGainsAndOffsets() && serial.requestADCstream()) isEspInitialized = true;
+                if(espConnected == false){
+                    UI.sendMessageToJS("connState:true");
+                    espConnected = true;
+                    isEspInitialized = false;
+                }
+            }
+            Sleep(1000);
+        }
+    });
+
+    std::thread espDataThread([]() { 
+        while (isAppRunning) {
+            // Wait until the JavaScript UI is ready
+            if (!UI.isJSinitialized) {
+                Sleep(10); 
+                continue;
+            }
+
+            if(espConnected){
+                if(isEspInitialized){
+                    bool modeChanged; uint8_t newMode;
+                    serial.readADCChunkToSharedBuffer(modeChanged, newMode);
+
+                    std::string s = "mode:" + std::to_string(newMode);
+                    if(modeChanged) UI.sendMessageToJS(s);
+                } else {
+                    if(serial.updateGainsAndOffsets() && serial.requestADCstream()) {
+                        isEspInitialized = true;
+                    } else {
+                        Sleep(10);
+                    }
+                }
+            } else {
+                Sleep(50); 
             }
         }
-    }});
+    });
 
     UI.launch(); // Runs indefinetly while window is open, only iterates to next line when window is closed
     

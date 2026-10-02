@@ -10,3 +10,20 @@ export function changeConnState(newState){
         connText.textContent = 'Disconnected'; 
     }
 }
+
+export function changeVoltageMode(newMode){
+    console.log(newMode);
+    if(newMode == "0"){
+        document.querySelector("#vMode50").classList.add('active');
+        document.querySelector("#vMode20").classList.remove('active');
+        document.querySelector("#vMode8").classList.remove('active');
+    } else if(newMode == "1"){
+        document.querySelector("#vMode50").classList.remove('active');
+        document.querySelector("#vMode20").classList.add('active');
+        document.querySelector("#vMode8").classList.remove('active');
+    } else if(newMode == "2"){
+        document.querySelector("#vMode50").classList.remove('active');
+        document.querySelector("#vMode20").classList.remove('active');
+        document.querySelector("#vMode8").classList.add('active');
+    }
+}

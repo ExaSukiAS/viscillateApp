@@ -27,6 +27,12 @@ private:
     HANDLE hStream = INVALID_HANDLE_VALUE; // Persistent handle for streaming
     std::vector<uint8_t> streamRXBuffer;   // Buffer to stitch fragmented USB packets
 
+    uint8_t prevMode; // to keep track of voltage mode change
+    bool isFirstMode = true; // becomes false when teh initial volatge mode data is sent to teh UI
+
+    const unsigned int ADCsamplingRate = 70000; // 70kHz ADC sampling rate
+    std::vector<float> residueSamples;
+
     // opens port and sets up DCB
     HANDLE openAndConfigureSerial(const std::string& portName) {
         HANDLE hSerial = CreateFileA(
@@ -278,8 +284,8 @@ public:
         return true;
     }
 
-    // Reads and parses available data from ESP32. Intended to be called rapidly in a while loop
-    void readADCChunkToSharedBuffer() {
+    // Reads and downsamples(min-max downsampling) available data from ESP32. Intended to be called rapidly in a while loop
+    void readADCChunkToSharedBuffer(bool& modeChanged, uint8_t& newMode) {
         if (hStream == INVALID_HANDLE_VALUE) return;
 
         uint8_t tempBuf[4096];
@@ -342,22 +348,88 @@ public:
                 continue; // skip to the next packet
             }
 
+            // detect voltage mode changes
+            if(prevMode != mode || isFirstMode){
+                newMode = mode;
+                modeChanged = true;
+                isFirstMode = false;
+            } else {
+                modeChanged = false;
+            }
+
+            // fetch correct gains and offsets
             double gain = gains[mode];
             double offset = offsets[mode];
 
-            std::vector<float> voltArray;
+            std::vector<float> voltArray; // stores the actual input voltages 
             voltArray.reserve(sampleCount);
 
             for (int i = 0; i < sampleCount; ++i) {
                 int16_t mV = 0;
                 memcpy(&mV, &streamRXBuffer[13 + (i * 2)], 2);
-                voltArray.push_back(static_cast<float>((mV - offset) / (gain * 1000.0)));
+                voltArray.push_back(static_cast<float>((mV - offset) / (gain * 1000.0))); // Vin = (mVout - offset)/ (gain * 1000)
             }
 
-            UI.shareNewFrame(voltArray.data(), sampleCount);
+            const int numConsecutiveSamples = (2 * ADCsamplingRate * UI.graphTimeFrame) / (UI.maxPointsPerGraphFrame * 1000); 
 
-            // Erase this parsed packet from the buffer so we can parse the next one
+            // combine any leftover samples from the last packet with the new voltArray
+            std::vector<float> processBuffer = residueSamples;
+            processBuffer.insert(processBuffer.end(), voltArray.begin(), voltArray.end());
+
+            std::vector<float> voltArrayDownsampled;
+
+            // only downsample if the window is at least 2 samples (prevents divide-by-zero if UI parameters cause numConsecutiveSamples to evaluate to < 2)
+            if (numConsecutiveSamples >= 2) {
+                int numFullWindows = processBuffer.size() / numConsecutiveSamples; // number full windows we can process right now
+                voltArrayDownsampled.reserve(numFullWindows * 2);
+
+                for (int w = 0; w < numFullWindows; ++w) {
+                    int startIndex = w * numConsecutiveSamples;
+                    
+                    float minVal = processBuffer[startIndex];
+                    float maxVal = processBuffer[startIndex];
+                    int minIdx = startIndex;
+                    int maxIdx = startIndex;
+
+                    // Find min and max within the current window
+                    for (int i = 1; i < numConsecutiveSamples; ++i) {
+                        float val = processBuffer[startIndex + i];
+                        if (val < minVal) {
+                            minVal = val;
+                            minIdx = startIndex + i;
+                        }
+                        if (val > maxVal) {
+                            maxVal = val;
+                            maxIdx = startIndex + i;
+                        }
+                    }
+
+                    // push chronologically to prevent visual zig-zag/backward artifacts in the UI graph
+                    if (minIdx <= maxIdx) {
+                        voltArrayDownsampled.push_back(minVal);
+                        voltArrayDownsampled.push_back(maxVal);
+                    } else {
+                        voltArrayDownsampled.push_back(maxVal);
+                        voltArrayDownsampled.push_back(minVal);
+                    }
+                }
+
+                // save the unprocessed remainder for the next iteration/packet
+                int processedCount = numFullWindows * numConsecutiveSamples;
+                residueSamples.assign(processBuffer.begin() + processedCount, processBuffer.end());
+
+                // share the downsampled data to the UI
+                if (!voltArrayDownsampled.empty()) UI.shareNewFrame(voltArrayDownsampled.data(), voltArrayDownsampled.size()); 
+            } else {
+                // If the window size is too small, skip downsampling to prevent data distortion
+                UI.shareNewFrame(voltArray.data(), voltArray.size());
+                residueSamples.clear(); // Reset residue since we bypassed it
+            }
+
+            // Erase this parsed packet from the stream buffer so we can parse the next one
             streamRXBuffer.erase(streamRXBuffer.begin(), streamRXBuffer.begin() + totalPacketSize);
+
+            prevMode = mode;
         }
     }
 
