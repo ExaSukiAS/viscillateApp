@@ -1,4 +1,4 @@
-import { changeConnState, changeVoltageMode } from "/DOMelementFuncs.js";
+import { changeConnState, changeVoltageMode, togglePlayPauseBtnActivation, handlePlayPauseBtnClick } from "/DOMelementFuncs.js";
 import { appendGraphData } from "./graph.js"; // IMPORT THE NEW FUNCTION
 
 let sharedFloatView = null;
@@ -22,6 +22,8 @@ window.chrome.webview.addEventListener('message', (e) => {
             appendGraphData(sharedFloatView, startIndex, amount); // Push directly to the graph buffer
         } else if (cmdType == "connState"){
             changeConnState(strParts[1] == "true" ? true : false);
+            togglePlayPauseBtnActivation(strParts[1] == "true" ? true : false);
+            handlePlayPauseBtnClick(); // simulate a click to auto play mode when connection is established
         } else if (cmdType == "mode"){
             changeVoltageMode(strParts[1]);
         }
