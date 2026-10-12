@@ -7,6 +7,9 @@
 #include <regex>
 #include <cstdint>
 #include "UIhandler.h"
+#include <cmath>
+#include <algorithm>
+#include <iomanip>
 
 #pragma comment(lib, "setupapi.lib")
 
@@ -30,7 +33,7 @@ private:
     uint8_t prevMode; // to keep track of voltage mode change
     bool isFirstMode = true; // becomes false when teh initial volatge mode data is sent to teh UI
 
-    const unsigned int ADCsamplingRate = 70000; // 70kHz ADC sampling rate
+    const unsigned int ADCsamplingRate = 30000; // 30kHz ADC sampling rate
     std::vector<float> residueSamples;
 
     // opens port and sets up DCB
@@ -368,6 +371,97 @@ public:
                 int16_t mV = 0;
                 memcpy(&mV, &streamRXBuffer[13 + (i * 2)], 2);
                 voltArray.push_back(static_cast<float>((mV - offset) / (gain * 1000.0))); // Vin = (mVout - offset)/ (gain * 1000)
+            }
+
+            // SIGNAL ANALYSIS (Executes approx. once per second)
+            static std::vector<float> analysisBuffer;
+            analysisBuffer.insert(analysisBuffer.end(), voltArray.begin(), voltArray.end());
+
+            // Wait until we have 1 second of data (ADCsamplingRate samples) to accurately calculate Frequency/RMS
+            if (analysisBuffer.size() >= ADCsamplingRate) {
+                float Vmax = -1e9f, Vmin = 1e9f;
+                double sum_v = 0.0, sum_v2 = 0.0;
+
+                // Calculate Min, Max, and prep for RMS/Mean
+                for (float v : analysisBuffer) {
+                    if (v > Vmax) Vmax = v;
+                    if (v < Vmin) Vmin = v;
+                    sum_v += v;
+                    sum_v2 += (v * v);
+                }
+
+                float Vpp = Vmax - Vmin;
+                float v_mean = sum_v / analysisBuffer.size();
+                float Vrms = std::sqrt(sum_v2 / analysisBuffer.size()); // True RMS (AC + DC)
+                float currentVoltage = analysisBuffer.back();
+
+                // ero/Midpoint crossing detection using a Software Schmitt Trigger
+                float threshold = v_mean; 
+                // 5% hysteresis, with a minimum 0.05V to prevent random ADC noise from triggering false frequencies
+                float hysteresis = (Vpp * 0.05f > 0.05f) ? (Vpp * 0.05f) : 0.05f;
+
+                std::vector<int> risingEdges;
+                std::vector<int> fallingEdges;
+
+                bool isHigh = analysisBuffer[0] > threshold;
+                for (size_t i = 1; i < analysisBuffer.size(); ++i) {
+                    if (!isHigh && analysisBuffer[i] > (threshold + hysteresis)) {
+                        isHigh = true;
+                        risingEdges.push_back(i);
+                    } else if (isHigh && analysisBuffer[i] < (threshold - hysteresis)) {
+                        isHigh = false;
+                        fallingEdges.push_back(i);
+                    }
+                }
+
+                // Calculate Frequency, Period, and Duty Cycle
+                float freq = 0.0f;
+                float periodSec = 0.0f;
+                float dutyCycle = 0.0f;
+
+                if (risingEdges.size() >= 2) {
+                    // Average period length
+                    double totalPeriodSamples = 0;
+                    for (size_t i = 1; i < risingEdges.size(); ++i) {
+                        totalPeriodSamples += (risingEdges[i] - risingEdges[i - 1]);
+                    }
+                    double avgPeriodSamples = totalPeriodSamples / (risingEdges.size() - 1);
+                    
+                    freq = static_cast<float>(ADCsamplingRate) / avgPeriodSamples;
+                    periodSec = 1.0f / freq;
+
+                    // Duty Cycle logic: Find the high time between rising and next falling edge
+                    double totalHighSamples = 0;
+                    int validPulses = 0;
+                    for (int rEdge : risingEdges) {
+                        auto fIt = std::lower_bound(fallingEdges.begin(), fallingEdges.end(), rEdge);
+                        if (fIt != fallingEdges.end()) {
+                            totalHighSamples += (*fIt - rEdge);
+                            validPulses++;
+                        }
+                    }
+                    if (validPulses > 0) {
+                        double avgHighSamples = totalHighSamples / validPulses;
+                        dutyCycle = (avgHighSamples / avgPeriodSamples) * 100.0f;
+                    }
+                }
+
+                float periodMS = periodSec*1000.0f;
+
+                std::ostringstream jsMessage; // holds signal analytics message in a comma-saperated format
+                jsMessage << "signalAnalytics:"
+                          << currentVoltage << ","
+                          << Vmax << ","
+                          << Vmin << ","
+                          << Vpp << ","
+                          << Vrms << ","
+                          << freq << ","
+                          << periodMS << ","
+                          << dutyCycle;
+
+                UI.sendMessageToJS(jsMessage.str());
+
+                analysisBuffer.clear(); // reset for the next 1-second batch
             }
 
             const int numConsecutiveSamples = (2 * ADCsamplingRate * UI.graphTimeFrame) / (UI.maxPointsPerGraphFrame * 1000); 

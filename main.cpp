@@ -23,8 +23,8 @@ int main() {
             }
 
             if(!serial.isConnected()){
+                if(espConnected) UI.sendMessageToJS("connState:false");
                 espConnected = false;
-                UI.sendMessageToJS("connState:false");
                 std::cout << "Esp32-C3 not connected, scanning ports...\n";
                 serial.scanForEsp(isAppRunning);
             } else {

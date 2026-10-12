@@ -53,6 +53,13 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Poppins-Bold";
+  src: url("./fonts/Poppins-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 body {
   background: #131314;
   background-size: 100px 100px;
@@ -342,7 +349,8 @@ body {
   fill: #80aaff;
 }
 .head .left .playPauseBtn.inactive {
-  cursor: default;
+  pointer-events: none;
+  cursor: not-allowed;
   border: 2px solid #333333;
   color: rgba(248, 249, 250, 0.2117647059);
 }

@@ -1,4 +1,4 @@
-import { changeConnState, changeVoltageMode, togglePlayPauseBtnActivation, handlePlayPauseBtnClick } from "/DOMelementFuncs.js";
+import { changeConnState, changeVoltageMode, togglePlayPauseBtnActivation, handlePlayPauseBtnClick, updateSignalAnalytics } from "/DOMelementFuncs.js";
 import { appendGraphData } from "./graph.js"; // IMPORT THE NEW FUNCTION
 
 let sharedFloatView = null;
@@ -26,6 +26,9 @@ window.chrome.webview.addEventListener('message', (e) => {
             handlePlayPauseBtnClick(); // simulate a click to auto play mode when connection is established
         } else if (cmdType == "mode"){
             changeVoltageMode(strParts[1]);
+        } else if(cmdType == "signalAnalytics"){
+            const [currentVoltage, Vmax, Vmin, Vpp, Vrms, freq, periodMS, dutyCycle] = strParts[1].split(",");
+            updateSignalAnalytics(currentVoltage, Vmax, Vmin, Vpp, Vrms, freq, periodMS, dutyCycle);
         }
     }
 });

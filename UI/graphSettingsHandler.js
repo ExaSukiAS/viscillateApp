@@ -1,4 +1,4 @@
-import { changeGraphYRange } from "./graph.js";
+import { changeDisplayTimeFrame, changeGraphVoltageRange } from "./graph.js";
 
 const timeFrameSlider = document.querySelector("#timeFrameSlider");
 const voltageLimitSlider = document.querySelector("#voltageLimitSlider");
@@ -24,7 +24,8 @@ function debounce(func, delay = 400) {
 // this function is is fired whenever graph settings are changed (debounced)
 const updateGraphSettings = debounce(() => {
   window.chrome.webview.postMessage(`graphSettings:${currentTimeFrame}:${currentVoltageLimit}:${currentVoltageOffset}`); // inform C++ of the new settings
-  changeGraphYRange(currentVoltageOffset - currentVoltageLimit, currentVoltageOffset + currentVoltageLimit); // update the graph's Y range
+  changeGraphVoltageRange(currentVoltageOffset - currentVoltageLimit, currentVoltageOffset + currentVoltageLimit); // update the graph's voltage range
+  changeDisplayTimeFrame(currentTimeFrame); // update the graph's time frame
 }, 400);
 
 

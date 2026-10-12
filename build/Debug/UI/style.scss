@@ -46,6 +46,8 @@ $font-small: 12px;
 @include load-font('Poppins', 'Poppins-ExtraBold', 800);
 @include load-font('Poppins', 'Poppins-Black', 900);
 
+@include load-font('Poppins-Bold', 'Poppins-Bold', 700); // for JS
+
 body{
   background: color(background);
   background-size: 100px 100px;
@@ -353,7 +355,8 @@ body{
         fill: color(primary-light);
       }
       &.inactive{
-        cursor: default;
+        pointer-events: none; 
+        cursor: not-allowed;
         border: 2px solid color(background-lighter);
         color: #f8f9fa36;
         svg{
