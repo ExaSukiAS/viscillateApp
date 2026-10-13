@@ -9,6 +9,11 @@
     <CustomBuild Include="C:\Users\ACER\Desktop\Viscillate\viscillateApp\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="C:\Users\ACER\Desktop\Viscillate\viscillateApp\resources\app.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{7D65EC6D-4D80-377F-AD99-06ED41969DCA}</UniqueIdentifier>
     </Filter>

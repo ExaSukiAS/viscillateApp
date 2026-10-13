@@ -1,0 +1,11 @@
+================================================================================
+Linker Errors
+Generated: 2026-10-13T04:45:56.783Z
+Total Errors: 2
+================================================================================
+
+[LNK2019] (MSVC)
+unresolved external symbol WinMain referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ) [C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\viscillateApp.vcxproj]
+
+[LNK1120] (MSVC)
+1 unresolved externals [C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\viscillateApp.vcxproj]

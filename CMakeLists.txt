@@ -8,9 +8,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(wil CONFIG REQUIRED)
 find_package(unofficial-webview2 CONFIG REQUIRED)
 
-add_executable(viscillateApp main.cpp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
-# Link targets
+add_executable(viscillateApp WIN32
+    main.cpp
+    resources/app.rc
+)
+
+    # Link targets
 target_link_libraries(viscillateApp PRIVATE
     WIL::WIL
     unofficial::webview2::webview2
@@ -22,6 +27,3 @@ add_custom_command(TARGET viscillateApp POST_BUILD
     ${CMAKE_CURRENT_SOURCE_DIR}/UI
     $<TARGET_FILE_DIR:viscillateApp>/UI
 )
-
-# Uncomment for production:
-#set_target_properties(viscillateApp PROPERTIES WIN32_EXECUTABLE TRUE)

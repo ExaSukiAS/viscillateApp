@@ -9,10 +9,12 @@
 #include <dwmapi.h>
 #include <vector>
 #include <sstream>
+#include "resource.h" 
 
 #pragma comment(lib, "dwmapi.lib")
 
 using namespace Microsoft::WRL;
+inline constexpr LPCWSTR appTitle = L"Viscillate";
 
 class UIhandler {
 private:
@@ -47,7 +49,7 @@ private:
         }
 
         if (pThis) return pThis->WindowProc(hWnd, message, wParam, lParam);
-        return DefWindowProc(hWnd, message, wParam, lParam);
+        return DefWindowProcW(hWnd, message, wParam, lParam);
     }
 
     LRESULT WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -85,7 +87,7 @@ private:
                 }
                 break;
             default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
+                return DefWindowProcW(hWnd, message, wParam, lParam);
         }
         return 0;
     }
@@ -152,6 +154,8 @@ private:
                         }).Get());
                     return S_OK;
                 }).Get());
+                
+        SetWindowTextW(hWnd, appTitle);
     }
 
     // splits a wide string into parts based on a delimiter
@@ -218,6 +222,10 @@ public:
         wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wcex.lpszClassName = CLASS_NAME;
+        wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
+        wcex.hIconSm = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_APP_ICON), 
+                                        IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), 
+                                        GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
         RegisterClassExW(&wcex);
 
         hWnd = CreateWindowExW(
@@ -240,9 +248,9 @@ public:
         InitializeWebView();
 
         MSG msg = {};
-        while (GetMessage(&msg, nullptr, 0, 0)) {
+        while (GetMessageW(&msg, nullptr, 0, 0)) {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
     }
 
