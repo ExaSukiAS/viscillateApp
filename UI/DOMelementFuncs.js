@@ -89,7 +89,27 @@ export function updateSignalAnalytics(currentVoltage, Vmax, Vmin, Vpp, Vrms, fre
         VminElement.innerHTML = `Vmin: ${formatTwoDecimals(Vmin)}V`;
         freqElement.innerHTML = `Freq: ${formatTwoDecimals(freq)}Hz`;
         dutyElement.innerHTML = `Duty: ${formatTwoDecimals(dutyCycle)}%`;
-        periodElement.innerHTML = `Period: ${periodMS}ms`;
+        periodElement.innerHTML = `Period: ${formatTwoDecimals(periodMS)}ms`;
         voltageElement.innerHTML = `Voltage: ${formatTwoDecimals(currentVoltage)}V`;
+    }
+}
+
+export function navitageToPage(page){
+    const voltmeterPage = document.querySelector(".main-voltmeter");
+    const oscilloscopePage = document.querySelector(".main-oscilloscope");
+    const highlightPill = document.querySelector(".highlightPill");
+
+    if(page === 'voltmeter'){
+        voltmeterPage.classList.remove("inactive");
+        highlightPill.classList.remove("oscilloscope");
+
+        highlightPill.classList.add("voltmeter");
+        oscilloscopePage.classList.add("inactive");
+    } else {
+        oscilloscopePage.classList.remove("inactive");
+        highlightPill.classList.remove("voltmeter");
+
+        highlightPill.classList.add("oscilloscope");
+        voltmeterPage.classList.add("inactive");
     }
 }

@@ -10,6 +10,9 @@ find_package(unofficial-webview2 CONFIG REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
+# Statically link the MSVC runtime (so users don't need to install VCRedist)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 add_executable(viscillateApp WIN32
     main.cpp
     resources/app.rc

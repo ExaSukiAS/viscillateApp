@@ -1,7 +1,8 @@
-import { changeConnState, changeVoltageMode, togglePlayPauseBtnActivation, handlePlayPauseBtnClick, updateSignalAnalytics } from "/DOMelementFuncs.js";
+import { changeConnState, changeVoltageMode, togglePlayPauseBtnActivation, handlePlayPauseBtnClick, updateSignalAnalytics, navitageToPage } from "/DOMelementFuncs.js";
 import { appendGraphData } from "./graph.js"; // IMPORT THE NEW FUNCTION
 
 let sharedFloatView = null;
+let currentPage = "oscilloscope";
 
 // Capture the memory when C++ posts it after the handshake
 window.chrome.webview.addEventListener('sharedbufferreceived', (e) => {
@@ -36,4 +37,13 @@ window.chrome.webview.addEventListener('message', (e) => {
 // Inform C++ that DOM and listeners are initialized
 window.addEventListener('DOMContentLoaded', () => {
     window.chrome.webview.postMessage("ready:dom");
+});
+
+document.querySelector("#modeOss").addEventListener('click', () => {
+    currentPage = "oscilloscope";
+    navitageToPage(currentPage);
+});
+document.querySelector("#modeVolt").addEventListener('click', () => {
+    currentPage = "voltmeter";
+    navitageToPage(currentPage);
 });
