@@ -10,31 +10,76 @@
 #include <cmath>
 #include <algorithm>
 #include <iomanip>
+#include <cstdlib>
 
 #pragma comment(lib, "setupapi.lib")
 
-class EspSerial {
+class RPSerial {
 private:
     int baudRate;
     UIhandler& UI;
 
-    // ESP32 commands
-    uint8_t adcStreamReqByte = 0x01;
-    uint8_t calibConstReqByte = 0x02;
-    uint8_t pingByte = 0x03;
+    // RP2040 commands
+    uint8_t oscilloscopeStreamByte = 0x01;
+    uint8_t voltmeterStreamByte = 0x02;
+    uint8_t streamStopByte = 0x03;
+    uint8_t calibConstReqByte = 0x04;
+    uint8_t pingByte = 0x05;
+    uint8_t timeFrameSetByte = 0x06;
 
-    // ESP32 states and ports
-    bool espConnected = false;
-    std::string espPortName;
+    // RP2040 states and ports
+    bool rpConnected = false;
+    std::string rpPortName;
 
     HANDLE hStream = INVALID_HANDLE_VALUE; // Persistent handle for streaming
     std::vector<uint8_t> streamRXBuffer;   // Buffer to stitch fragmented USB packets
 
-    uint8_t prevMode; // to keep track of voltage mode change
-    bool isFirstMode = true; // becomes false when teh initial volatge mode data is sent to teh UI
+    uint8_t prevVoltageMode; // to keep track of voltage mode change
+    bool isFirstMode = true; // becomes false when the initial voltage mode data is sent to the UI
 
-    const unsigned int ADCsamplingRate = 30000; // 30kHz ADC sampling rate
+    const unsigned int ADCsamplingRate = 500000; // 500ksps ADC sampling rate
     std::vector<float> residueSamples;
+
+    // Builds and writes a strict 9-byte little-endian packet sent to the rp2040: [cmd, b0, b1, b2, b3, b4, b5, b6, b7]
+    bool sendCommand(HANDLE hSerial, uint8_t cmd, double payload = 0) {
+        if (hSerial == INVALID_HANDLE_VALUE) return false;
+
+        uint8_t packet[9];
+        packet[0] = cmd;
+        std::memcpy(&packet[1], &payload, sizeof(double));
+
+        DWORD totalWritten = 0;
+        while (totalWritten < sizeof(packet)) {
+            DWORD bytesWritten = 0;
+            if (!WriteFile(hSerial, packet + totalWritten, sizeof(packet) - totalWritten, &bytesWritten, NULL) || bytesWritten == 0) {
+                return false;
+            }
+            totalWritten += bytesWritten;
+        }
+        return true;
+    }
+
+    // Reads an exact number of bytes or returns false on timeout/error
+    bool readExact(HANDLE hSerial, uint8_t* dst, DWORD expectedBytes, DWORD overallTimeoutMs = 300) {
+        DWORD totalRead = 0;
+        ULONGLONG startTick = GetTickCount64();
+
+        while (totalRead < expectedBytes) {
+            if (GetTickCount64() - startTick >= overallTimeoutMs) {
+                return false;
+            }
+
+            DWORD bytesRead = 0;
+            if (!ReadFile(hSerial, dst + totalRead, expectedBytes - totalRead, &bytesRead, NULL)) {
+                return false;
+            }
+            if (bytesRead == 0) {
+                return false; // COMMTIMEOUTS expired
+            }
+            totalRead += bytesRead;
+        }
+        return true;
+    }
 
     // opens port and sets up DCB
     HANDLE openAndConfigureSerial(const std::string& portName) {
@@ -49,58 +94,79 @@ private:
         );
 
         if (hSerial == INVALID_HANDLE_VALUE) {
+            std::cout << "[RPSerial] CreateFileA failed on " << portName
+                      << " (GetLastError=" << GetLastError() << ")\n";
             return INVALID_HANDLE_VALUE;
         }
 
         DCB dcb = {0};
         dcb.DCBlength = sizeof(dcb);
         if (GetCommState(hSerial, &dcb)) {
-            dcb.BaudRate = this->baudRate;
+            dcb.BaudRate = this->baudRate; // Never use 1200
             dcb.ByteSize = 8;
             dcb.StopBits = ONESTOPBIT;
             dcb.Parity   = NOPARITY;
+            dcb.fBinary  = TRUE;
+            dcb.fOutxCtsFlow = FALSE;
+            dcb.fOutxDsrFlow = FALSE;
+            dcb.fOutX    = FALSE;
+            dcb.fInX     = FALSE;
             dcb.fDtrControl = DTR_CONTROL_ENABLE;
             dcb.fRtsControl = RTS_CONTROL_ENABLE;
-            SetCommState(hSerial, &dcb);
+
+            if (!SetCommState(hSerial, &dcb)) {
+                std::cout << "[RPSerial] SetCommState failed (GetLastError=" << GetLastError() << ")\n";
+            }
+        } else {
+            std::cout << "[RPSerial] GetCommState failed (GetLastError=" << GetLastError() << ")\n";
         }
+
+        // Explicitly force usbser.sys to emit USB SET_CONTROL_LINE_STATE (DTR=1, RTS=1)
+        EscapeCommFunction(hSerial, SETDTR);
+        EscapeCommFunction(hSerial, SETRTS);
 
         return hSerial;
     }
 
-    // configures timeouts for serial communication
-    void setSerialTimeouts(HANDLE hSerial, DWORD readInterval, DWORD readTotalConst, DWORD writeTotalConst) {
-        COMMTIMEOUTS timeouts = {0};
-        timeouts.ReadIntervalTimeout = readInterval;
-        timeouts.ReadTotalTimeoutConstant = readTotalConst;
-        timeouts.ReadTotalTimeoutMultiplier = 0;
-        timeouts.WriteTotalTimeoutConstant = writeTotalConst;
-        timeouts.WriteTotalTimeoutMultiplier = 0;
-        SetCommTimeouts(hSerial, &timeouts);
-    }
-
-    // scans Windows for the hardcoded ESP32-C3 Hardware ID
+    // scans Windows for the hardcoded RP2040 Hardware ID
     std::vector<std::string> getCandidatePorts() {
         std::vector<std::string> matchingPorts;
-        HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_DEVCLASS_PORTS, 0, 0, DIGCF_PRESENT); 
-
-        if (hDevInfo == INVALID_HANDLE_VALUE)  return matchingPorts;
+        HDEVINFO hDevInfo = SetupDiGetClassDevsA(&GUID_DEVCLASS_PORTS, 0, 0, DIGCF_PRESENT);
+        if (hDevInfo == INVALID_HANDLE_VALUE) return matchingPorts;
 
         SP_DEVINFO_DATA devInfoData;
         devInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+        std::regex comRegex(R"((COM\d+))", std::regex_constants::icase);
 
         for (DWORD i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &devInfoData); ++i) {
             char hardwareId[512] = {0};
-            char friendlyName[256] = {0};
+            if (!SetupDiGetDeviceRegistryPropertyA(
+                    hDevInfo, &devInfoData, SPDRP_HARDWAREID, NULL,
+                    (PBYTE)hardwareId, sizeof(hardwareId) - 2, NULL)) {
+                continue;
+            }
 
-            SetupDiGetDeviceRegistryPropertyA(hDevInfo, &devInfoData, SPDRP_HARDWAREID, NULL, (PBYTE)hardwareId, sizeof(hardwareId), NULL);
-            std::string hwStr(hardwareId);
+            // SPDRP_HARDWAREID is REG_MULTI_SZ (null-separated strings, ending in \0\0)
+            bool vidPidMatched = false;
+            for (const char* p = hardwareId; *p != '\0'; p += std::strlen(p) + 1) {
+                std::string entry(p);
+                for (char& c : entry) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+                if (entry.find("VID_2E8A&PID_1697") != std::string::npos) {
+                    vidPidMatched = true;
+                    break;
+                }
+            }
 
-            if (hwStr.find("VID_303A&PID_1001") != std::string::npos || hwStr.find("vid_303a&pid_1001") != std::string::npos) {
-                if (SetupDiGetDeviceRegistryPropertyA(hDevInfo, &devInfoData, SPDRP_FRIENDLYNAME, NULL, (PBYTE)friendlyName, sizeof(friendlyName), NULL)){
-                    std::regex comRegex(R"((COM\d+))");
+            if (vidPidMatched) {
+                char friendlyName[256] = {0};
+                if (SetupDiGetDeviceRegistryPropertyA(
+                        hDevInfo, &devInfoData, SPDRP_FRIENDLYNAME, NULL,
+                        (PBYTE)friendlyName, sizeof(friendlyName) - 1, NULL)) {
                     std::smatch match;
                     std::string friendlyStr(friendlyName);
-                    if (std::regex_search(friendlyStr, match, comRegex)) matchingPorts.push_back("\\\\.\\" + match[1].str());
+                    if (std::regex_search(friendlyStr, match, comRegex)) {
+                        matchingPorts.push_back("\\\\.\\" + match[1].str());
+                    }
                 }
             }
         }
@@ -140,158 +206,204 @@ private:
         return portFound;
     }
 
-public:
-    double gains[3] = {0.0, 0.0, 0.0};
-    double offsets[3] = {0.0, 0.0, 0.0};
+    // configures timeouts for serial communication
+    void setSerialTimeouts(HANDLE hSerial, DWORD readInterval, DWORD readTotalConst, DWORD writeTotalConst) {
+        COMMTIMEOUTS timeouts = {0};
+        timeouts.ReadIntervalTimeout = readInterval;
+        timeouts.ReadTotalTimeoutConstant = readTotalConst;
+        timeouts.ReadTotalTimeoutMultiplier = 0;
+        timeouts.WriteTotalTimeoutConstant = writeTotalConst;
+        timeouts.WriteTotalTimeoutMultiplier = 0;
+        SetCommTimeouts(hSerial, &timeouts);
+    }
 
-    EspSerial(int baudRate, UIhandler& ui) : UI(ui) {
+    // Clears Windows driver queues and drains any leftover bytes already in transit
+    void drainRxBuffer(HANDLE hSerial) {
+        PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
+        setSerialTimeouts(hSerial, MAXDWORD, 0, 0);
+        uint8_t trash[256];
+        DWORD trashRead = 0;
+        while (ReadFile(hSerial, trash, sizeof(trash), &trashRead, NULL) && trashRead > 0) {}
+    }
+
+public:
+    double gains[2] = {0.0, 0.0};
+    double offsets[2] = {0.0, 0.0};
+
+    RPSerial(int baudRate, UIhandler& ui) : UI(ui) {
         this->baudRate = baudRate;
     }
 
-    // scans for esp32
-    void scanForEsp(const std::atomic<bool>& isRunningRef) {
-        while (!espConnected && isRunningRef) {
+    // scans for rp2040
+    void scanForRp(const std::atomic<bool>& isRunningRef) {
+        while (!rpConnected && isRunningRef.load()) {
             const std::vector<std::string> ports = getCandidatePorts();
+            if (ports.empty()) {
+                std::cout << "[RPSerial] No matching VID_2E8A&PID_1697 ports found.\n";
+            }
 
             for (const auto& portName : ports) {
+                if (!isRunningRef.load()) return;
+
                 HANDLE hSerial = openAndConfigureSerial(portName);
-                if (hSerial == INVALID_HANDLE_VALUE) continue; 
-                
-                setSerialTimeouts(hSerial, 5, 100, 20);
+                if (hSerial == INVALID_HANDLE_VALUE) continue;
 
-                // Send ping byte (0x03)
-                DWORD bytesWritten = 0;
-                if (WriteFile(hSerial, &pingByte, 1, &bytesWritten, NULL)) {
+                // Give idle/suspended USB port + DTR line time to settle
+                Sleep(50);
+
+                // Stop any leftover stream if the previous PC session crashed
+                setSerialTimeouts(hSerial, 50, 50, 50);
+                sendCommand(hSerial, streamStopByte, 0);
+                Sleep(25); // Let RP2040 process stop and clear any USB_PACKET_TIMEOUT_US
+
+                drainRxBuffer(hSerial);
+
+                // Send 5-byte Ping command (0x05, 0, 0, 0, 0) and read 4-byte Pong
+                setSerialTimeouts(hSerial, 50, 200, 50);
+                if (!sendCommand(hSerial, pingByte, 0)) {
+                    std::cout << "[RPSerial] Ping WriteFile failed on " << portName
+                              << " (GetLastError=" << GetLastError() << ")\n";
+                } else {
                     uint8_t responseBuf[4] = {0};
-                    DWORD bytesRead = 0;
-
-                    if (ReadFile(hSerial, responseBuf, 4, &bytesRead, NULL) && bytesRead == 4) {
-                        if (responseBuf[0] == 0x01 && responseBuf[1] == 0x06 && responseBuf[2] == 0x09 && responseBuf[3] == 0x07){
-                            std::cout << "Detected ESP32-C3 at " << portName << "\n";
-                            espPortName = portName;
-                            espConnected = true;
-
+                    if (readExact(hSerial, responseBuf, 4, 300)) {
+                        if (responseBuf[0] == 0x01 && responseBuf[1] == 0x06 &&
+                            responseBuf[2] == 0x09 && responseBuf[3] == 0x07) {
+                            std::cout << "Detected RP2040 at " << portName << "\n";
+                            rpPortName = portName;
+                            rpConnected = true;
                             CloseHandle(hSerial);
-                            return; 
+                            return;
+                        } else {
+                            std::cout << "[RPSerial] Unexpected pong bytes on " << portName << ": "
+                                      << std::hex << (int)responseBuf[0] << " " << (int)responseBuf[1] << " "
+                                      << (int)responseBuf[2] << " " << (int)responseBuf[3] << std::dec << "\n";
                         }
+                    } else {
+                        std::cout << "[RPSerial] Ping timed out waiting for 4-byte pong on " << portName << "\n";
                     }
                 }
 
                 CloseHandle(hSerial);
             }
-            Sleep(1000);
+
+            for (int i = 0; i < 10 && isRunningRef.load(); ++i) {
+                Sleep(100);
+            }
         }
     }
 
-    // checks whether the current ESP32 port is still active or not
+    // checks whether the current RP2040 port is still active or not
     bool isConnected() {
-        if(isPortPresent(espPortName)){
-            return true;
-        } else {
-            espConnected = false;
+        if (!rpConnected || rpPortName.empty()) {
             return false;
         }
+        if (isPortPresent(rpPortName)) {
+            return true;
+        }
+        rpConnected = false;
+        rpPortName.clear();
+        return false;
     }
 
-    // Fetches the constants from the ESP32
+    // Fetches the constants from the RP2040
     bool updateGainsAndOffsets() {
-        if (!espConnected || espPortName.empty()) return false;
+        if (!rpConnected || rpPortName.empty()) return false;
 
-        HANDLE hSerial = openAndConfigureSerial(espPortName);
+        HANDLE hSerial = openAndConfigureSerial(rpPortName);
         if (hSerial == INVALID_HANDLE_VALUE) return false;
-        
-        // clear Windows RX/TX buffers
-        PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR);
-        // perform a non-blocking dummy read to suck out any ghost bytes from the ESP32's USB FIFO
-        setSerialTimeouts(hSerial, MAXDWORD, 0, 0);
-        uint8_t trash[64];
-        DWORD trashRead = 0;
-        while (ReadFile(hSerial, trash, sizeof(trash), &trashRead, NULL) && trashRead > 0) {}
 
-        // Set the actual timeouts for reading the 48 bytes
-        setSerialTimeouts(hSerial, 50, 250, 20);
+        drainRxBuffer(hSerial);
+        setSerialTimeouts(hSerial, 50, 250, 50);
 
-        // Send 0x02 byte to ESP32
-        DWORD bytesWritten = 0;
-        if (!WriteFile(hSerial, &calibConstReqByte, 1, &bytesWritten, NULL) || bytesWritten != 1) {
-            std::cout << "Error requesting ESP32 for gain and offset constants";
+        if (!sendCommand(hSerial, calibConstReqByte, 0)) {
+            std::cout << "Error requesting RP2040 for gain and offset constants\n";
             CloseHandle(hSerial);
             return false;
         }
 
-        uint8_t rxBuffer[48] = {0};
-        DWORD totalBytesRead = 0;
-        DWORD bytesRead = 0;
-
-        // Read exactly 48 bytes
-        while (totalBytesRead < 48) {
-            if (ReadFile(hSerial, rxBuffer + totalBytesRead, 48 - totalBytesRead, &bytesRead, NULL)) {
-                if (bytesRead == 0) break; 
-                totalBytesRead += bytesRead;
-            } else {
-                break; 
-            }
-        }
-
+        uint8_t rxBuffer[32] = {0};
+        bool ok = readExact(hSerial, rxBuffer, sizeof(rxBuffer), 400);
         CloseHandle(hSerial);
 
-        if (totalBytesRead == 48) {
-            memcpy(&gains[0], &rxBuffer[0], 8);
-            memcpy(&gains[1], &rxBuffer[8], 8);
-            memcpy(&gains[2], &rxBuffer[16], 8);
-            memcpy(&offsets[0], &rxBuffer[24], 8);
-            memcpy(&offsets[1], &rxBuffer[32], 8);
-            memcpy(&offsets[2], &rxBuffer[40], 8);
+        if (ok) {
+            std::memcpy(&gains[0],   &rxBuffer[0],  8);
+            std::memcpy(&gains[1],   &rxBuffer[8],  8);
+            std::memcpy(&offsets[0], &rxBuffer[16], 8);
+            std::memcpy(&offsets[1], &rxBuffer[24], 8);
 
-            std::cout << "Gains: [" << gains[0] << ", " << gains[1] << ", " << gains[2] << "]\n";
-            std::cout << "Offsets: [" << offsets[0] << ", " << offsets[1] << ", " << offsets[2] << "]\n";
-
+            std::cout << "Gains: [" << gains[0] << ", " << gains[1] << "]\n";
+            std::cout << "Offsets: [" << offsets[0] << ", " << offsets[1] << "]\n";
             return true;
         }
 
         return false;
     }
 
-    // requests esp32 to initiate continuous ADC data streaming
-    bool requestADCstream() {
+
+    // requests rp2040 to initiate continuous ADC data streaming
+    bool requestADCstream(bool voltmeterMode = false) {
+        if (!rpConnected || rpPortName.empty()) return false;
+
         if (hStream != INVALID_HANDLE_VALUE) {
-            CloseHandle(hStream); // Close any existing stream
+            CloseHandle(hStream);
+            hStream = INVALID_HANDLE_VALUE;
         }
 
-        hStream = openAndConfigureSerial(espPortName);
+        hStream = openAndConfigureSerial(rpPortName);
         if (hStream == INVALID_HANDLE_VALUE) return false;
 
-        // Clear Windows RX/TX buffers
-        PurgeComm(hStream, PURGE_RXCLEAR | PURGE_TXCLEAR);
+        drainRxBuffer(hStream);
+        setSerialTimeouts(hStream, MAXDWORD, 0, 50);
 
-        // Dummy read to suck out any ghost bytes
-        setSerialTimeouts(hStream, MAXDWORD, 0, 0);
-        uint8_t trash[64];
-        DWORD trashRead = 0;
-        while (ReadFile(hStream, trash, sizeof(trash), &trashRead, NULL) && trashRead > 0) {}
-
-        // Set non-blocking timeouts for streaming
-        // MAXDWORD interval + 0 TotalConst means ReadFile returns immediately with whatever is in the buffer (no freezing)
-        setSerialTimeouts(hStream, MAXDWORD, 0, 50); 
-
-        // Send 0x01 byte to ESP32
-        DWORD bytesWritten = 0;
-        if(!WriteFile(hStream, &adcStreamReqByte, 1, &bytesWritten, NULL) || bytesWritten != 1){
-            std::cout << "Error requesting ESP32 for ADC stream\n";
+        uint8_t cmd = voltmeterMode ? voltmeterStreamByte : oscilloscopeStreamByte;
+        if (!sendCommand(hStream, cmd, 0)) {
+            std::cout << "Error requesting RP2040 for ADC stream\n";
             CloseHandle(hStream);
             hStream = INVALID_HANDLE_VALUE;
             return false;
         }
 
-        streamRXBuffer.clear(); // clear software buffer for new stream
+        streamRXBuffer.clear();
         return true;
     }
 
-    // Reads and downsamples(min-max downsampling) available data from ESP32. Intended to be called rapidly in a while loop
+    // informs the RP2040 about the desired time frame for the oscilloscope. 
+    // The RP2040 will then adjust its min/max decimation factor accordingly.
+    bool setTimeFrame(uint32_t timeFrame) {
+        HANDLE target = hStream;
+        bool openedTemp = false;
+
+        if (target == INVALID_HANDLE_VALUE) {
+            if (!rpConnected || rpPortName.empty()) return false;
+            target = openAndConfigureSerial(rpPortName);
+            if (target == INVALID_HANDLE_VALUE) return false;
+            setSerialTimeouts(target, 50, 100, 50);
+            openedTemp = true;
+        }
+
+        bool ok = sendCommand(target, timeFrameSetByte, timeFrame);
+        if (openedTemp) CloseHandle(target);
+        return ok;
+    }
+
+    // stops the ADC stream and closes the serial handle
+    void stopADCstream() {
+        if (hStream != INVALID_HANDLE_VALUE) {
+            sendCommand(hStream, streamStopByte, 0);
+            CloseHandle(hStream);
+            hStream = INVALID_HANDLE_VALUE;
+            streamRXBuffer.clear();
+        }
+    }
+
+
+    const size_t USB_HEADER_WORDS = 3; // [0]=0x1388, [1]=voltageMode, [2]=number of data words
+
+    // Reads and downsamples(min-max downsampling) available data from RP2040. Intended to be called rapidly in a while loop
     void readADCChunkToSharedBuffer(bool& modeChanged, uint8_t& newMode) {
         if (hStream == INVALID_HANDLE_VALUE) return;
 
-        uint8_t tempBuf[4096];
+        uint8_t tempBuf[8192]; 
         DWORD bytesRead = 0;
         
         // Read whatever data arrived since the last loop iteration
@@ -299,61 +411,33 @@ public:
             streamRXBuffer.insert(streamRXBuffer.end(), tempBuf, tempBuf + bytesRead);
         }
 
-        // Process all complete packets in our buffer
-        while (streamRXBuffer.size() >= 13) {
-            // Find Sync Header (0xAA 0xBB)
-            size_t syncIdx = 0;
-            bool syncFound = false;
-            for (size_t i = 0; i < streamRXBuffer.size() - 1; ++i) {
-                if (streamRXBuffer[i] == 0xAA && streamRXBuffer[i+1] == 0xBB) {
-                    syncIdx = i;
-                    syncFound = true;
-                    break;
-                }
+        while (streamRXBuffer.size() > USB_HEADER_WORDS * sizeof(uint16_t)) {
+            // Check for little-endian 5000 (0x1388 -> 0x88, 0x13)
+            if (streamRXBuffer[0] != 0x88 || streamRXBuffer[1] != 0x13) {
+                // Not aligned to a frame boundary; drop 1 byte and keep scanning
+                streamRXBuffer.erase(streamRXBuffer.begin());
+                continue;
             }
 
-            if (!syncFound) {
-                // No sync found. Erase garbage, but keep the last byte in case it's half of a sync header (0xAA)
-                uint8_t lastByte = streamRXBuffer.back();
-                streamRXBuffer.clear();
-                if (lastByte == 0xAA) streamRXBuffer.push_back(0xAA);
-                break;
-            }
+            const size_t USB_DATA_WORDS = streamRXBuffer[4] | (streamRXBuffer[5] << 8);
+            const size_t USB_FRAME_WORDS = USB_HEADER_WORDS + USB_DATA_WORDS;
+            const size_t USB_FRAME_BYTES = USB_FRAME_WORDS * sizeof(uint16_t);
 
-            // Remove any garbage bytes before the sync header
-            if (syncIdx > 0) {
-                streamRXBuffer.erase(streamRXBuffer.begin(), streamRXBuffer.begin() + syncIdx);
-            }
+            // Copy safely into aligned uint16_t vector
+            std::vector<uint16_t> packet(USB_FRAME_WORDS);
+            std::memcpy(packet.data(), streamRXBuffer.data(), USB_FRAME_BYTES);
 
-            // Ensure we have at least the full 13-byte header structure
-            // (2 Sync + 8 Timestamp + 1 Mode + 2 SampleCount) = 13
-            if (streamRXBuffer.size() < 13) break; 
+            uint16_t voltageMode = packet[1];
 
-            // Extract sample count to calculate total packet size
-            int16_t sampleCount = 0;
-            memcpy(&sampleCount, &streamRXBuffer[11], 2);
-
-            size_t totalPacketSize = 13 + (sampleCount * 2); // 13 header bytes + (N * 2 payload bytes)
-
-            // If the full packet hasn't arrived over USB yet, break and wait for next loop iteration
-            if (streamRXBuffer.size() < totalPacketSize) {
-                break; 
-            }
-
-            // Full packet detected, parsing logic:
-            uint64_t timestamp = 0;
-            memcpy(&timestamp, &streamRXBuffer[2], 8);
-            
-            uint8_t mode = streamRXBuffer[10];
-            if (mode > 2) {
-                std::cout << "Warning: Corrupt mode byte (" << (int)mode << "). Skipping packet.\n";
-                streamRXBuffer.erase(streamRXBuffer.begin(), streamRXBuffer.begin() + totalPacketSize);
-                continue; // skip to the next packet
+            // handle corrupted data 
+            if (voltageMode > 1) {
+                streamRXBuffer.erase(streamRXBuffer.begin());
+                continue;
             }
 
             // detect voltage mode changes
-            if(prevMode != mode || isFirstMode){
-                newMode = mode;
+            if(prevVoltageMode != voltageMode || isFirstMode){
+                newMode = voltageMode;
                 modeChanged = true;
                 isFirstMode = false;
             } else {
@@ -361,178 +445,38 @@ public:
             }
 
             // fetch correct gains and offsets
-            double gain = gains[mode];
-            double offset = offsets[mode];
+            double gain = gains[voltageMode]; // divide by 1000 so that we get answers in volts
+            double offset = offsets[voltageMode];
 
             std::vector<float> voltArray; // stores the actual input voltages 
-            voltArray.reserve(sampleCount);
+            voltArray.reserve(USB_DATA_WORDS); // number of voltage points (two consicutive data are min/max pairs)
 
-            for (int i = 0; i < sampleCount; ++i) {
-                int16_t mV = 0;
-                memcpy(&mV, &streamRXBuffer[13 + (i * 2)], 2);
-                voltArray.push_back(static_cast<float>((mV - offset) / (gain * 1000.0))); // Vin = (mVout - offset)/ (gain * 1000)
+            for (int i = 3; i < USB_FRAME_WORDS; i++) {
+                voltArray.push_back(static_cast<float>((packet[i] * gain + offset) / 100.0));
             }
 
-            // SIGNAL ANALYSIS (Executes approx. once per second)
-            static std::vector<float> analysisBuffer;
-            analysisBuffer.insert(analysisBuffer.end(), voltArray.begin(), voltArray.end());
+            printf("Received %zu voltage points. First 2 points: %.2f, %.2f\n", voltArray.size(), voltArray[0], voltArray[1]);
 
-            // Wait until we have 1 second of data (ADCsamplingRate samples) to accurately calculate Frequency/RMS
-            if (analysisBuffer.size() >= ADCsamplingRate) {
-                float Vmax = -1e9f, Vmin = 1e9f;
-                double sum_v = 0.0, sum_v2 = 0.0;
+            UI.shareNewFrame(voltArray.data(), voltArray.size()); // Send data to UI
 
-                // Calculate Min, Max, and prep for RMS/Mean
-                for (float v : analysisBuffer) {
-                    if (v > Vmax) Vmax = v;
-                    if (v < Vmin) Vmin = v;
-                    sum_v += v;
-                    sum_v2 += (v * v);
-                }
+            /*
+            std::ostringstream jsMessage; // holds signal analytics message in a comma-saperated format
+            jsMessage << "signalAnalytics:"
+                        << currentVoltage << ","
+                        << Vmax << ","
+                        << Vmin << ","
+                        << Vpp << ","
+                        << Vrms << ","
+                        << freq << ","
+                        << periodMS << ","
+                        << dutyCycle;
 
-                float Vpp = Vmax - Vmin;
-                float v_mean = sum_v / analysisBuffer.size();
-                float Vrms = std::sqrt(sum_v2 / analysisBuffer.size()); // True RMS (AC + DC)
-                float currentVoltage = analysisBuffer.back();
+            UI.sendMessageToJS(jsMessage.str());
+            */
 
-                // ero/Midpoint crossing detection using a Software Schmitt Trigger
-                float threshold = v_mean; 
-                // 5% hysteresis, with a minimum 0.05V to prevent random ADC noise from triggering false frequencies
-                float hysteresis = (Vpp * 0.05f > 0.05f) ? (Vpp * 0.05f) : 0.05f;
-
-                std::vector<int> risingEdges;
-                std::vector<int> fallingEdges;
-
-                bool isHigh = analysisBuffer[0] > threshold;
-                for (size_t i = 1; i < analysisBuffer.size(); ++i) {
-                    if (!isHigh && analysisBuffer[i] > (threshold + hysteresis)) {
-                        isHigh = true;
-                        risingEdges.push_back(i);
-                    } else if (isHigh && analysisBuffer[i] < (threshold - hysteresis)) {
-                        isHigh = false;
-                        fallingEdges.push_back(i);
-                    }
-                }
-
-                // Calculate Frequency, Period, and Duty Cycle
-                float freq = 0.0f;
-                float periodSec = 0.0f;
-                float dutyCycle = 0.0f;
-
-                if (risingEdges.size() >= 2) {
-                    // Average period length
-                    double totalPeriodSamples = 0;
-                    for (size_t i = 1; i < risingEdges.size(); ++i) {
-                        totalPeriodSamples += (risingEdges[i] - risingEdges[i - 1]);
-                    }
-                    double avgPeriodSamples = totalPeriodSamples / (risingEdges.size() - 1);
-                    
-                    freq = static_cast<float>(ADCsamplingRate) / avgPeriodSamples;
-                    periodSec = 1.0f / freq;
-
-                    // Duty Cycle logic: Find the high time between rising and next falling edge
-                    double totalHighSamples = 0;
-                    int validPulses = 0;
-                    for (int rEdge : risingEdges) {
-                        auto fIt = std::lower_bound(fallingEdges.begin(), fallingEdges.end(), rEdge);
-                        if (fIt != fallingEdges.end()) {
-                            totalHighSamples += (*fIt - rEdge);
-                            validPulses++;
-                        }
-                    }
-                    if (validPulses > 0) {
-                        double avgHighSamples = totalHighSamples / validPulses;
-                        dutyCycle = (avgHighSamples / avgPeriodSamples) * 100.0f;
-                    }
-                }
-
-                float periodMS = periodSec*1000.0f;
-
-                std::ostringstream jsMessage; // holds signal analytics message in a comma-saperated format
-                jsMessage << "signalAnalytics:"
-                          << currentVoltage << ","
-                          << Vmax << ","
-                          << Vmin << ","
-                          << Vpp << ","
-                          << Vrms << ","
-                          << freq << ","
-                          << periodMS << ","
-                          << dutyCycle;
-
-                UI.sendMessageToJS(jsMessage.str());
-
-                analysisBuffer.clear(); // reset for the next 1-second batch
-            }
-
-            const int numConsecutiveSamples = (2 * ADCsamplingRate * UI.graphTimeFrame) / (UI.maxPointsPerGraphFrame * 1000); 
-
-            // combine any leftover samples from the last packet with the new voltArray
-            std::vector<float> processBuffer = residueSamples;
-            processBuffer.insert(processBuffer.end(), voltArray.begin(), voltArray.end());
-
-            std::vector<float> voltArrayDownsampled;
-
-            // only downsample if the window is at least 2 samples (prevents divide-by-zero if UI parameters cause numConsecutiveSamples to evaluate to < 2)
-            if (numConsecutiveSamples >= 2) {
-                int numFullWindows = processBuffer.size() / numConsecutiveSamples; // number full windows we can process right now
-                voltArrayDownsampled.reserve(numFullWindows * 2);
-
-                for (int w = 0; w < numFullWindows; ++w) {
-                    int startIndex = w * numConsecutiveSamples;
-                    
-                    float minVal = processBuffer[startIndex];
-                    float maxVal = processBuffer[startIndex];
-                    int minIdx = startIndex;
-                    int maxIdx = startIndex;
-
-                    // Find min and max within the current window
-                    for (int i = 1; i < numConsecutiveSamples; ++i) {
-                        float val = processBuffer[startIndex + i];
-                        if (val < minVal) {
-                            minVal = val;
-                            minIdx = startIndex + i;
-                        }
-                        if (val > maxVal) {
-                            maxVal = val;
-                            maxIdx = startIndex + i;
-                        }
-                    }
-
-                    // push chronologically to prevent visual zig-zag/backward artifacts in the UI graph
-                    if (minIdx <= maxIdx) {
-                        voltArrayDownsampled.push_back(minVal);
-                        voltArrayDownsampled.push_back(maxVal);
-                    } else {
-                        voltArrayDownsampled.push_back(maxVal);
-                        voltArrayDownsampled.push_back(minVal);
-                    }
-                }
-
-                // save the unprocessed remainder for the next iteration/packet
-                int processedCount = numFullWindows * numConsecutiveSamples;
-                residueSamples.assign(processBuffer.begin() + processedCount, processBuffer.end());
-
-                // share the downsampled data to the UI
-                if (!voltArrayDownsampled.empty()) UI.shareNewFrame(voltArrayDownsampled.data(), voltArrayDownsampled.size()); 
-            } else {
-                // If the window size is too small, skip downsampling to prevent data distortion
-                UI.shareNewFrame(voltArray.data(), voltArray.size());
-                residueSamples.clear(); // Reset residue since we bypassed it
-            }
-
-            // Erase this parsed packet from the stream buffer so we can parse the next one
-            streamRXBuffer.erase(streamRXBuffer.begin(), streamRXBuffer.begin() + totalPacketSize);
-
-            prevMode = mode;
+            streamRXBuffer.erase(streamRXBuffer.begin(), streamRXBuffer.begin() + USB_FRAME_BYTES); // Remove consumed frame from RX buffer
+            prevVoltageMode = voltageMode;
         }
-    }
 
-    // stop ADC stream handlers
-    void stopADCstream() {
-        if (hStream != INVALID_HANDLE_VALUE) {            
-            CloseHandle(hStream);
-            hStream = INVALID_HANDLE_VALUE;
-            streamRXBuffer.clear();
-        }
     }
 };

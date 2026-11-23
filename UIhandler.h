@@ -203,7 +203,6 @@ public:
     float graphVoltageOffset = 0.0f; // in volts
 
     const int maxPointsPerGraphFrame = 1000; // max number of points on a single frame of the graph
-    const int maxFrameRate = 50; // max number of frames per second for the graph
 
     UIhandler() {}
 

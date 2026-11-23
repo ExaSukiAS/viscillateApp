@@ -7,15 +7,24 @@
 #include "serial.h"
 
 UIhandler UI;
-EspSerial serial(2000000, UI);
+RPSerial serial(2000000, UI);
 
 std::atomic<bool> isAppRunning = true; // flag to indicate if teh app is still running (only becomes false when the UI window is closed)
-std::atomic<bool> espConnected = false; //  flag to indicate esp32 connection state
-std::atomic<bool> isEspInitialized = false; // flag to if esp32 requires initialization commands to fetch gain and offset constants and start ADC streaming
-
-float dummyData[512] = {0.0f};
+std::atomic<bool> rpConnected = false; //  flag to indicate rp2040 connection state
+std::atomic<bool> isRpInitialized = false; // flag to if rp2040 requires initialization commands to fetch gain and offset constants and start ADC streaming
 
 int main() {
+    // attach terminal (ONLY FOR DEBUGGING PURPOSES, REMOVE FOR RELEASE)
+    if (AllocConsole()) {
+        FILE* fp = nullptr;
+        freopen_s(&fp, "CONOUT$", "w", stdout);
+        freopen_s(&fp, "CONOUT$", "w", stderr);
+        freopen_s(&fp, "CONIN$",  "r", stdin);
+        std::ios::sync_with_stdio(true);
+        std::cout.clear();
+        std::cerr.clear();
+    }
+    
     std::thread serialThread([]() { 
         while (isAppRunning) {
             // Wait until the JavaScript UI is ready
@@ -25,22 +34,22 @@ int main() {
             }
 
             if(!serial.isConnected()){
-                if(espConnected) UI.sendMessageToJS("connState:false");
-                espConnected = false;
-                std::cout << "Esp32-C3 not connected, scanning ports...\n";
-                serial.scanForEsp(isAppRunning);
+                if(rpConnected) UI.sendMessageToJS("connState:false");
+                rpConnected = false;
+                std::cout << "RP2040 not connected, scanning ports...\n";
+                serial.scanForRp(isAppRunning);
             } else {
-                if(espConnected == false){
+                if(rpConnected == false){
                     UI.sendMessageToJS("connState:true");
-                    espConnected = true;
-                    isEspInitialized = false;
+                    rpConnected = true;
+                    isRpInitialized = false;
                 }
             }
             Sleep(1000);
         }
     });
 
-    std::thread espDataThread([]() { 
+    std::thread rpDataThread([]() { 
         while (isAppRunning) {
             // Wait until the JavaScript UI is ready
             if (!UI.isJSinitialized) {
@@ -48,8 +57,8 @@ int main() {
                 continue;
             }
 
-            if(espConnected){
-                if(isEspInitialized){
+            if(rpConnected){
+                if(isRpInitialized){
                     bool modeChanged; uint8_t newMode;
                     serial.readADCChunkToSharedBuffer(modeChanged, newMode);
 
@@ -57,7 +66,7 @@ int main() {
                     if(modeChanged) UI.sendMessageToJS(s);
                 } else {
                     if(serial.updateGainsAndOffsets() && serial.requestADCstream()) {
-                        isEspInitialized = true;
+                        isRpInitialized = true;
                     } else {
                         Sleep(10);
                     }
@@ -76,7 +85,7 @@ int main() {
 
     // wait for the threads to exit the loop
     if (serialThread.joinable()) serialThread.join();
-    if (espDataThread.joinable()) espDataThread.join();
+    if (rpDataThread.joinable()) rpDataThread.join();
 
     return 0;
 }
