@@ -232,6 +232,15 @@ public:
 
     RPSerial(int baudRate, UIhandler& ui) : UI(ui) {
         this->baudRate = baudRate;
+
+        // Give UI access only to setTimeFrame()
+        UI.setTimeFrameCallback([this](double newTimeFrame) {
+            return this->setTimeFrame(newTimeFrame);
+        });
+    }
+
+     ~RPSerial() {
+        UI.setTimeFrameCallback(nullptr); // Safe cleanup if serial is destroyed before UI
     }
 
     // scans for rp2040
@@ -369,7 +378,7 @@ public:
 
     // informs the RP2040 about the desired time frame for the oscilloscope. 
     // The RP2040 will then adjust its min/max decimation factor accordingly.
-    bool setTimeFrame(uint32_t timeFrame) {
+    bool setTimeFrame(double timeFrame) {
         HANDLE target = hStream;
         bool openedTemp = false;
 
@@ -380,6 +389,8 @@ public:
             setSerialTimeouts(target, 50, 100, 50);
             openedTemp = true;
         }
+
+        timeFrame = timeFrame * 1000.0; // Convert ms to microseconds
 
         bool ok = sendCommand(target, timeFrameSetByte, timeFrame);
         if (openedTemp) CloseHandle(target);
@@ -399,7 +410,7 @@ public:
 
     const size_t USB_HEADER_WORDS = 3; // [0]=0x1388, [1]=voltageMode, [2]=number of data words
 
-    // Reads and downsamples(min-max downsampling) available data from RP2040. Intended to be called rapidly in a while loop
+    // Reads available data from RP2040. Intended to be called rapidly in a while loop
     void readADCChunkToSharedBuffer(bool& modeChanged, uint8_t& newMode) {
         if (hStream == INVALID_HANDLE_VALUE) return;
 
@@ -452,7 +463,7 @@ public:
             voltArray.reserve(USB_DATA_WORDS); // number of voltage points (two consicutive data are min/max pairs)
 
             for (int i = 3; i < USB_FRAME_WORDS; i++) {
-                voltArray.push_back(static_cast<float>((packet[i] * gain + offset) / 100.0));
+                voltArray.push_back(static_cast<float>((packet[i] * gain + offset)));
             }
 
             printf("Received %zu voltage points. First 2 points: %.2f, %.2f\n", voltArray.size(), voltArray[0], voltArray[1]);

@@ -71,13 +71,13 @@
           </div>
         </div>
         <div class="horizontalDivider"></div>
-        <div class="graphSettings">
+        <div class="graphSettings inactive"> <!--states: inactive or ""-->
           <h2>Graph Zooming and Panning</h2>
           <div class="slider-container" id="timeFrame">
             <div class="slider-label">Graph Time Frame (ms)</div>
             <div class="slider-wrapper">
               <input type="number" class="floating-input" id="timeFrameTextBox" value="100"/>
-              <input type="range" class="styled-slider" id="timeFrameSlider" min="1" max="2000" value="100"/>
+              <input type="range" class="styled-slider" id="timeFrameSlider" min="0.5" max="2000" value="100"/>
             </div>
           </div>
           <div class="slider-container" id="voltageLimit">

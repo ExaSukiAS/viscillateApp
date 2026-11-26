@@ -154,6 +154,10 @@ body {
   height: 2px;
   background-color: #333333;
 }
+.main-oscilloscope .right .graphSettings.inactive {
+  pointer-events: none;
+  opacity: 0.5;
+}
 .main-oscilloscope .right .graphSettings {
   width: 100%;
   display: flex;

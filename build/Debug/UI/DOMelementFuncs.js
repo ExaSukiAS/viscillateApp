@@ -3,13 +3,16 @@ let isGraphPlaying = true;
 export function changeConnState(newState){
     const connIndicatorDiv = document.querySelector(".connectionIndicator");
     const connText = document.querySelector(".connectionText"); 
+    const graphSettingsDiv = document.querySelector(".graphSettings");
 
     if(newState == true){
         connIndicatorDiv.classList.add('connected');
         connText.textContent = 'Connected'; 
+        graphSettingsDiv.classList.remove('inactive');
     } else {
         connIndicatorDiv.classList.remove('connected');
         connText.textContent = 'Disconnected'; 
+        graphSettingsDiv.classList.add('inactive');
     }
 }
 

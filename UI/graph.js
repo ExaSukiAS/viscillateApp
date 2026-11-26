@@ -18,13 +18,19 @@ colorKeys.forEach((key) => {
     if (value) colors[key] = value;
 });
 
-const MAX_POINTS = 1000; // Maximum number of points to display
+// Number of points to display in a single graph frame 
+// We show 1000 time points (axis x)
+// Each time point has 2 corresponding voltage values (axis y), hence 2000 total points in the buffer
+// Each x axis has 2 points because we store both min and max voltage values for each time point to create a filled area effect in the graph (to not loose data after decimation)
+const ONE_FRAME_POINTS = 2000; 
 
-const xs = new Float32Array(MAX_POINTS);
-const ys = new Float32Array(MAX_POINTS);
+const xs = new Float32Array(ONE_FRAME_POINTS);
+const ys = new Float32Array(ONE_FRAME_POINTS);
 
-for (let i = 0; i < MAX_POINTS; i++) {
-    xs[i] = i; 
+// xs looks like this: [0, 0, 1, 1, 2, 2, ..., 999, 999] for a total of 2000 elements
+for (let i = 0; i < ONE_FRAME_POINTS; i += 2) {
+    xs[i] = i/2; 
+    xs[i + 1] = i/2;
 }
 
 const data = [xs, ys];
@@ -107,9 +113,9 @@ function interactionPlugin() {
 
                 // Draw measurment tool
                 if ((measureState === 1 || measureState === 2) && startIdx !== null && endIdx !== null) {
-                    const t1 = (data[0][startIdx] / MAX_POINTS) * displayTimeMs;
+                    const t1 = (data[0][startIdx] / (ONE_FRAME_POINTS / 2)) * displayTimeMs;
                     const v1 = data[1][startIdx];
-                    const t2 = (data[0][endIdx] / MAX_POINTS) * displayTimeMs;
+                    const t2 = (data[0][endIdx] / (ONE_FRAME_POINTS / 2)) * displayTimeMs;
                     const v2 = data[1][endIdx];
 
                     const x1 = u.valToPos(data[0][startIdx], 'x', true) - u.bbox.left;
@@ -166,7 +172,7 @@ function interactionPlugin() {
 
                 // DRAW HOVER TOOLTIP
                 if (hoveredIdx !== null && measureState !== 1) {
-                    const time = (data[0][hoveredIdx] / MAX_POINTS) * displayTimeMs;
+                    const time = (data[0][hoveredIdx] / (ONE_FRAME_POINTS / 2)) * displayTimeMs;
                     const volt = data[1][hoveredIdx];
                     const cx = u.valToPos(data[0][hoveredIdx], 'x', true) - u.bbox.left;
                     const cy = u.valToPos(data[1][hoveredIdx], 'y', true) - u.bbox.top;
@@ -219,7 +225,7 @@ const opts = {
         interactionPlugin() // Register the interaction plugin
     ],
     scales: {
-        x: { time: false, range: [0, MAX_POINTS] },
+        x: { time: false, range: [0, ONE_FRAME_POINTS/2] },
         y: { 
             range: (self, dataMin, dataMax) => [graphVoltageRange.min, graphVoltageRange.max] 
         },
@@ -235,7 +241,7 @@ const opts = {
                 return Array.from({ length: X_DIVS + 1 }, (_, i) => min + i * step);
             },
             values: (u, splits) => splits.map(split => {
-                const mappedValue = (split / MAX_POINTS) * displayTimeMs; 
+                const mappedValue = (split / (ONE_FRAME_POINTS / 2)) * displayTimeMs; 
                 return Number.isInteger(mappedValue) ? mappedValue.toString() : mappedValue.toFixed(1);
             }),
         },
@@ -310,11 +316,11 @@ export function appendGraphData(sharedView, startIndex, amount) {
 
     const newSamples = sharedView.subarray(startIndex, startIndex + amount);
 
-    if (amount >= MAX_POINTS) {
-        ys.set(newSamples.subarray(amount - MAX_POINTS));
+    if (amount >= ONE_FRAME_POINTS) {
+        ys.set(newSamples.subarray(amount - ONE_FRAME_POINTS));
     } else {
-        ys.copyWithin(0, amount, MAX_POINTS);
-        ys.set(newSamples, MAX_POINTS - amount);
+        ys.copyWithin(0, amount, ONE_FRAME_POINTS);
+        ys.set(newSamples, ONE_FRAME_POINTS - amount);
     }
 
     isDirty = true;

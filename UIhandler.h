@@ -10,6 +10,7 @@
 #include <vector>
 #include <sstream>
 #include "resource.h" 
+#include <functional>
 
 #pragma comment(lib, "dwmapi.lib")
 
@@ -32,6 +33,8 @@ private:
     size_t currentFloatOffset = 0; 
     const size_t maxSamplesPerSharedBuffer = 280000; // max samples the shared memory buffer can hold
     std::chrono::steady_clock::time_point lastSyncTime; // last time when JS was notified about buffer through IPC
+
+    std::function<bool(double)> setTimeFrame;
 
     // windows message queues for sending IPC messages to JS from outside main thread
     #define WM_SCOPE_SYNC (WM_USER + 1)
@@ -184,13 +187,19 @@ private:
             isJSinitialized = true;
         } else if (msgParts[0] == L"graphSettings") {
             // Handle graph settings update
-            graphTimeFrame = std::stoi(msgParts[1]);
+            graphTimeFrame = std::stof(msgParts[1]);
             graphVoltageLimit = std::stof(msgParts[2]);
             graphVoltageOffset = std::stof(msgParts[3]);
 
-            std::wcout << L"Graph Settings Updated - Time Frame: " << graphTimeFrame 
-                       << L", Voltage Limit: " << graphVoltageLimit 
-                       << L", Voltage Offset: " << graphVoltageOffset << std::endl;
+            if(setTimeFrame) {
+                if(setTimeFrame(graphTimeFrame)){
+                    std::cout << "[UIhandler] Time frame updated to: " << graphTimeFrame << " ms" << std::endl;
+                } else {
+                    std::cout << "[UIhandler] Time frame update rejected by RPSerial." << std::endl;
+                }
+            } else {
+                std::cerr << "setTimeFrame callback not set!" << std::endl;
+            }
         }
     }
 
@@ -198,7 +207,7 @@ public:
     std::atomic<bool> isJSinitialized = false; // flag to indicate is javascript is initialized
 
     // UI graph settings
-    int graphTimeFrame = 100; // in ms
+    float graphTimeFrame = 100; // in ms
     float graphVoltageLimit = 50.0f; // in volts
     float graphVoltageOffset = 0.0f; // in volts
 
@@ -298,5 +307,10 @@ public:
         MultiByteToWideChar(CP_UTF8, 0, &message[0], (int)message.size(), &wstr[0], size_needed);
         
         sendMessageToJS(wstr); // Pass to the wide-string version
+    }
+
+    // Sets the callback function for updating the time frame
+    void setTimeFrameCallback(std::function<bool(double)> callback) {
+        setTimeFrame = callback;
     }
 };
