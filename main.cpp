@@ -65,7 +65,7 @@ int main() {
                     std::string s = "mode:" + std::to_string(newMode);
                     if(modeChanged) UI.sendMessageToJS(s);
                 } else {
-                    if(serial.updateGainsAndOffsets() && serial.requestADCstream()) {
+                    if(serial.updateGainsAndOffsets() && serial.requestADCstream() && serial.setTimeFrame(UI.graphTimeFrame)) {
                         isRpInitialized = true;
                     } else {
                         Sleep(10);

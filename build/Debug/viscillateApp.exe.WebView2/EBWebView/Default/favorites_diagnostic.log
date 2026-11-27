@@ -2255,3 +2255,123 @@
 2026-11-26 17:59:40.344: [INFO] BookmarksLoadDropped droppedNodes=0
 2026-11-26 17:59:40.344: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
 2026-11-26 18:03:16.209: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:18:06.488: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:18:06.488: [INFO] Profiles total count: 1
+2026-11-27 08:18:06.488: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-26T17:59:48.202Z
+2026-11-27 08:18:06.488: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:18:06.488: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-26T17:59:48.202Z
+2026-11-27 08:18:06.488: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 08:18:06.488: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 08:18:06.488: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 08:18:06.488: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:19:15.584: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:40:09.135: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:40:09.135: [INFO] Profiles total count: 1
+2026-11-27 08:40:09.135: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:18:12.414Z
+2026-11-27 08:40:09.135: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:40:09.135: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:18:12.414Z
+2026-11-27 08:40:09.135: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 08:40:09.135: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 08:40:09.135: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 08:40:09.135: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:41:23.139: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:41:53.184: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:41:53.184: [INFO] Profiles total count: 1
+2026-11-27 08:41:53.184: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:40:15.532Z
+2026-11-27 08:41:53.184: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:41:53.184: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:40:15.532Z
+2026-11-27 08:41:53.184: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 08:41:53.184: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 08:41:53.184: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 08:41:53.184: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:42:04.334: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:48:45.629: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:48:45.629: [INFO] Profiles total count: 1
+2026-11-27 08:48:45.629: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:41:59.386Z
+2026-11-27 08:48:45.629: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:48:45.629: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:41:59.386Z
+2026-11-27 08:48:45.629: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 08:48:45.629: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 08:48:45.629: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 08:48:45.629: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:51:04.138: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:53:05.911: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:53:05.911: [INFO] Profiles total count: 1
+2026-11-27 08:53:05.911: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:50:14.743Z
+2026-11-27 08:53:05.911: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 08:53:05.911: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:50:14.743Z
+2026-11-27 08:53:05.911: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 08:53:05.911: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 08:53:05.911: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 08:53:05.911: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 08:53:38.713: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:01:36.419: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:01:36.419: [INFO] Profiles total count: 1
+2026-11-27 09:01:36.419: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:53:15.386Z
+2026-11-27 09:01:36.419: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:01:36.419: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T08:53:15.386Z
+2026-11-27 09:01:36.419: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:01:36.419: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:01:36.419: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:01:36.419: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:07:59.954: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:08:01.138: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:08:01.138: [INFO] Profiles total count: 1
+2026-11-27 09:08:01.138: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:07:40.996Z
+2026-11-27 09:08:01.138: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:08:01.138: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:07:40.996Z
+2026-11-27 09:08:01.138: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:08:01.138: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:08:01.138: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:08:01.138: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:08:25.208: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:09:08.885: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:09:08.885: [INFO] Profiles total count: 1
+2026-11-27 09:09:08.885: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:08:13.749Z
+2026-11-27 09:09:08.885: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:09:08.885: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:08:13.749Z
+2026-11-27 09:09:08.885: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:09:08.885: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:09:08.885: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:09:08.885: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:10:10.762: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:12:15.274: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:12:15.274: [INFO] Profiles total count: 1
+2026-11-27 09:12:15.274: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:08:13.749Z
+2026-11-27 09:12:15.274: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:12:15.274: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:08:13.749Z
+2026-11-27 09:12:15.274: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:12:15.274: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:12:15.274: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:12:15.274: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:12:24.292: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:12:27.158: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:12:27.158: [INFO] Profiles total count: 1
+2026-11-27 09:12:27.158: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:12:22.118Z
+2026-11-27 09:12:27.158: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:12:27.158: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:12:22.118Z
+2026-11-27 09:12:27.158: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:12:27.158: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:12:27.158: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:12:27.158: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:13:30.775: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:13:40.520: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:13:40.520: [INFO] Profiles total count: 1
+2026-11-27 09:13:40.521: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:12:36.651Z
+2026-11-27 09:13:40.521: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:13:40.521: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:12:36.651Z
+2026-11-27 09:13:40.521: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:13:40.521: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:13:40.521: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:13:40.521: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:13:52.698: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:16:11.376: [INFO] CurrentProfilePath: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:16:11.376: [INFO] Profiles total count: 1
+2026-11-27 09:16:11.376: [INFO] Profile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:12:36.651Z
+2026-11-27 09:16:11.376: [INFO] LastUsedProfileDir: C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default
+2026-11-27 09:16:11.376: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=C:\Users\ACER\Desktop\Viscillate\viscillateApp\build\Debug\viscillateApp.exe.WebView2\EBWebView\Default lastActive=2026-11-27T09:12:36.651Z
+2026-11-27 09:16:11.376: [INFO] OnDoneLoading sync enabled: 0
+2026-11-27 09:16:11.376: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-27 09:16:11.376: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-27 09:16:11.376: [INFO] BookmarksSnapshot Startup total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-27 09:32:33.534: [INFO] BookmarksSnapshot Shutdown total=0 bar=0 other=0 mobile=0 showBar=0 showBarNTP=1

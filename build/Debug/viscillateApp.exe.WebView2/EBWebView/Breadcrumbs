@@ -1,10 +1,10 @@
-0:01:34 Microsoft.Shutdown.OnAppExiting
-0:01:34 Microsoft.Shutdown.HandleAppExitingForPlatform_Aura
-0:01:34 Microsoft.Shutdown.HandleAppExitingForPlatform_Aura.NotificationUIManager_StartShutdown
-0:01:34 Microsoft.Shutdown.HandleAppExitingForPlatform_Aura.CloseAllSecondaryWidgets
-0:01:34 Microsoft.Shutdown.NotifyAppTerminating
-0:01:34 Microsoft.Shutdown.OnAppExiting
-0:01:40 Shutdown
+0:00:00 Tab1 StartNav1 #auto_toplevel
+0:00:00 Tab1 StartNav2 #typed
+0:00:00 Tab1 FinishNav1
+0:00:00 Tab1 PageLoad
+0:00:02 Tab1 FinishNav2
+0:00:02 Tab1 PageLoad
+0:02:18 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -16,7 +16,7 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:12 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:00:32 Microsoft.Shutdown.OnWindowClosing
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -28,7 +28,29 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:41 Microsoft.Shutdown.OnWindowClosing
+0:04:19 Widget Closed: TooltipAura
+0:06:17 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:06:17 Browser1 Close Tab1 at 0
+0:06:17 Microsoft.Shutdown.OnWindowClosing
+0:06:17 Microsoft.UnloadController.IsUnclosableApp_IsNotWebApp
+0:06:17 Microsoft.UnloadController.HasCompletedUnloadProcessing_False
+0:06:17 Microsoft.Shutdown.OnWindowClosing_MaybeClearBrowsingDataOnExit
+0:06:17 Microsoft.Shutdown.OnWindowClosing_ClearBrowsingDataOnExitNotInProgress
+0:06:17 Microsoft.Shutdown.OnWindowClosingPostClearBrowsingData_NoBrowsingDataCleared
+0:06:17 Widget Closed: WebView2MinimalFrame
+0:06:17 Microsoft.UnloadController.TabStripEmpty
+0:06:17 Microsoft.Last_Browser_Removed
+0:06:17 Widget Closed: 
+0:06:17 Microsoft.Shutdown.ShutdownIfNoBrowsers
+0:06:17 Microsoft.Shutdown.SetTryingToQuit_Quitting
+0:06:17 Microsoft.Shutdown.NotifyAppTerminating
+0:06:17 Microsoft.Shutdown.OnAppExiting
+0:06:17 Microsoft.Shutdown.HandleAppExitingForPlatform_Aura
+0:06:17 Microsoft.Shutdown.HandleAppExitingForPlatform_Aura.NotificationUIManager_StartShutdown
+0:06:17 Microsoft.Shutdown.HandleAppExitingForPlatform_Aura.CloseAllSecondaryWidgets
+0:06:17 Microsoft.Shutdown.NotifyAppTerminating
+0:06:17 Microsoft.Shutdown.OnAppExiting
+0:06:23 Shutdown
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -40,9 +62,7 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:17 Widget Closed: TooltipAura
-0:00:20 Widget Closed: TooltipAura
-0:00:40 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:00:24 Microsoft.Shutdown.OnWindowClosing
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -54,7 +74,7 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:06 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:01:01 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -66,7 +86,7 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:24 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:00:08 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -78,7 +98,7 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:45 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:01:03 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
 0:00:00 Startup
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
 0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
@@ -90,6 +110,19 @@
 0:00:00 Tab1 PageLoad
 0:00:02 Tab1 FinishNav2
 0:00:02 Tab1 PageLoad
-0:00:36 Widget Closed: TooltipAura
-0:02:06 Widget Closed: TooltipAura
-0:03:35 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+0:00:12 Microsoft.Shutdown.OnWindowClosing
+0:00:00 Startup
+0:00:00 Microsoft.DeleteProfileHelper.CleanUpEphemeralProfiles
+0:00:00 Microsoft.DeleteProfileHelper.CleanUpDeletedProfiles
+0:00:00 Microsoft.BrowserList.AddBrowser
+0:00:00 Browser1 Insert active Tab1 at 0
+0:00:00 Tab1 StartNav1 #auto_toplevel
+0:00:00 Tab1 StartNav2 #typed
+0:00:00 Tab1 FinishNav1
+0:00:00 Tab1 PageLoad
+0:00:02 Tab1 FinishNav2
+0:00:02 Tab1 PageLoad
+0:01:57 Widget Closed: TooltipAura
+0:06:21 Widget Closed: TooltipAura
+0:09:33 Widget Closed: TooltipAura
+0:16:22 Microsoft.Shutdown.OnWindowClosing

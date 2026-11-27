@@ -390,7 +390,7 @@ public:
             openedTemp = true;
         }
 
-        timeFrame = timeFrame * 1000.0; // Convert ms to microseconds
+        timeFrame = timeFrame * 1000.0f; // Convert ms to microseconds
 
         bool ok = sendCommand(target, timeFrameSetByte, timeFrame);
         if (openedTemp) CloseHandle(target);
@@ -462,11 +462,21 @@ public:
             std::vector<float> voltArray; // stores the actual input voltages 
             voltArray.reserve(USB_DATA_WORDS); // number of voltage points (two consicutive data are min/max pairs)
 
-            for (int i = 3; i < USB_FRAME_WORDS; i++) {
-                voltArray.push_back(static_cast<float>((packet[i] * gain + offset)));
+            if(UI.graphTimeFrame > 2.0f){
+                for (int i = USB_HEADER_WORDS; i < USB_FRAME_WORDS; i++) {
+                    voltArray.push_back(static_cast<float>((packet[i] * gain + offset)));
+                }
+            } else { // When graph time fram is < 2ms, the rp2040 still sends data of 2ms (2000 total points, pairs repeated). We need to cut it down to take the first required number of data and share it with UI.
+                uint16_t stepSize = 2.0f / UI.graphTimeFrame; // step size to take data points from the 2ms data sent by rp2040
+                uint16_t requiredDataPoints = static_cast<uint16_t>(USB_DATA_WORDS / stepSize); // number of actual data points to be processed
+                for (int i = 0; i < requiredDataPoints; i++) {
+                    for(int j = 0; j < stepSize; j++){
+                        voltArray.push_back(static_cast<float>((packet[i + USB_HEADER_WORDS] * gain + offset)));
+                    }
+                }
             }
 
-            printf("Received %zu voltage points. First 2 points: %.2f, %.2f\n", voltArray.size(), voltArray[0], voltArray[1]);
+            printf("Received %zu voltage points. First 2 points: %.2f, %.2f\n", USB_FRAME_WORDS-3, voltArray[0], voltArray[1]);
 
             UI.shareNewFrame(voltArray.data(), voltArray.size()); // Send data to UI
 
